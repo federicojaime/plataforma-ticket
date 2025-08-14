@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Button, Checkbox, FileInput, Label, Select, TextInput, Card, Spinner, Radio } from 'flowbite-react';
+import { useState, useEffect } from 'react';
+import { Button, Checkbox, Label, Select, TextInput, Card, Spinner } from 'flowbite-react';
 import { HiOutlineTicket, HiOutlineUser, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineStar, HiOutlineExclamationCircle, HiOutlineTrash, HiOutlineUserRemove, HiOutlineHeart } from 'react-icons/hi';
 import { FaTshirt, FaRunning, FaMedal, FaChild, FaWheelchair } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
@@ -59,10 +59,13 @@ const Registrar_compra = () => {
     const [inscripcionesData, setInscripcionesData] = useState(null);
     const [idPreferencia, setIdPreferencia] = useState(null);
     const [mpInitialized, setMpInitialized] = useState(false);
-    const certificadoMedico = useRef(null);
-    const certificadoDiscapacidad = useRef(null);
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
+
+    // Estados para códigos de descuento
+    const [codigoDescuento, setCodigoDescuento] = useState('');
+    const [descuentoAplicado, setDescuentoAplicado] = useState(null);
+    const [aplicandoCodigo, setAplicandoCodigo] = useState(false);
 
     // Estados para cada persona que se va a inscribir
     const [personas, setPersonas] = useState([]);
@@ -90,9 +93,10 @@ const Registrar_compra = () => {
         acepta_promocion: false,
         acepta_reglamento: false,
         acepta_deslinde: false,
+        declara_certificado_medico: false, // Nuevo campo para la declaración
+        declara_certificado_discapacidad: false, // Nuevo campo para declaración de discapacidad
         tipo_inscripcion: 'regular',
         distancia: '5k', // 5k, 10k, kid, discapacitado
-        certificado_discapacidad: false
     };
 
     const CATEGORIES_INFO = {
@@ -119,6 +123,21 @@ const Registrar_compra = () => {
     };
 
     const apiUrl = import.meta.env.VITE_API_URL;
+
+    // Códigos de descuento hardcodeados (basados en la tabla)
+    const CODIGOS_DESCUENTO = {
+        'RUR9': { nombre: 'RUN URBANO', descuento: 500 },
+        'MEC2': { nombre: 'MERCURIO', descuento: 300 },
+        'MPC3': { nombre: 'MERCEDES PISTA Y CAMPO', descuento: 400 },
+        'PIV5': { nombre: 'PARQUE IV CENTENARIO', descuento: 350 },
+        'UNS1': { nombre: 'UNIVERSIDAD NACIONAL DE SAN LUIS', descuento: 250 },
+        'LLI4': { nombre: 'LOS LINCES', descuento: 450 },
+        'ZAR7': { nombre: 'ZARIGUEYAS RUNNING', descuento: 200 },
+        'PRY1': { nombre: 'PROYECTO 1', descuento: 600 },
+        'ESR6': { nombre: 'ESTATU RUN', descuento: 380 },
+        'CAE8': { nombre: 'CENTRO DE ALTO RENDIMIENTO DEPORTIVO (CARD)', descuento: 550 },
+        'ACG3': { nombre: 'AGRUPACION CLAUDIO GUTIERREZ', descuento: 320 }
+    };
 
     // Cargar datos de inscripciones al montar el componente
     useEffect(() => {
@@ -186,6 +205,39 @@ const Registrar_compra = () => {
         setPersonas(newPersonas);
     };
 
+    // Función para aplicar código de descuento
+    const aplicarCodigoDescuento = () => {
+        if (!codigoDescuento.trim()) {
+            toast.error('Por favor, ingresa un código de descuento');
+            return;
+        }
+
+        setAplicandoCodigo(true);
+
+        setTimeout(() => {
+            const codigoUpper = codigoDescuento.trim().toUpperCase();
+            const descuento = CODIGOS_DESCUENTO[codigoUpper];
+
+            if (descuento) {
+                setDescuentoAplicado({
+                    codigo: codigoUpper,
+                    ...descuento
+                });
+                toast.success(`¡Código aplicado! Descuento de ${descuento.descuento} - ${descuento.nombre}`);
+            } else {
+                toast.error('Código de descuento inválido');
+            }
+            setAplicandoCodigo(false);
+        }, 1000);
+    };
+
+    // Función para remover código de descuento
+    const removerCodigoDescuento = () => {
+        setDescuentoAplicado(null);
+        setCodigoDescuento('');
+        toast.info('Código de descuento removido');
+    };
+
     // Nueva función para manejar cuando se termina de escribir la fecha
     const handleFechaNacimientoBlur = (e) => {
         const value = e.target.value;
@@ -193,6 +245,18 @@ const Registrar_compra = () => {
 
         const edad = calcularEdad(value);
         const categoria = obtenerCategoria(edad);
+        
+        // Validación específica para categoría Kids
+        if (personaActualData.distancia === 'kid' && edad >= 15) {
+            toast.error(`Esta persona tiene ${edad} años. La categoría Kids es solo para menores de 15 años. Por favor, cambia a una categoría apropiada.`);
+            return;
+        }
+        
+        // Validación para categorías 5K y 10K
+        if ((personaActualData.distancia === '5k' || personaActualData.distancia === '10k') && edad < 15) {
+            toast.error(`Esta persona tiene ${edad} años. Las categorías 5K y 10K requieren al menos 15 años. Te recomendamos la categoría Kids.`);
+            return;
+        }
         
         // Actualizar la categoría
         const newPersonas = [...personas];
@@ -203,24 +267,12 @@ const Registrar_compra = () => {
         if (edad < 15 && newPersonas[personaActual].distancia !== 'kid') {
             toast.info(`Edad calculada: ${edad} años - Categoría Kids recomendada`);
         } else if (categoria) {
-            toast.info(`Edad calculada: ${edad} años - Categoría: ${categoria}`);
+            toast.success(`Edad calculada: ${edad} años - Categoría: ${categoria}`);
         }
     };
 
     const validateFile = (file) => {
-        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg'];
-        const maxSize = 7 * 1024 * 1024; // 7 MB in bytes
-
-        if (!allowedTypes.includes(file.type)) {
-            toast.error("El archivo debe ser PDF o JPG.");
-            return false;
-        }
-
-        if (file.size > maxSize) {
-            toast.error("El archivo debe ser menor a 7 MB.");
-            return false;
-        }
-
+        // Ya no necesitamos validar archivos porque no se suben
         return true;
     };
 
@@ -243,10 +295,10 @@ const Registrar_compra = () => {
         
         // Validación específica para cada categoría
         if (persona.distancia === 'kid' && edad >= 15) {
-            errors.push("La categoría Kids es solo para menores de 15 años.");
+            errors.push(`Esta persona tiene ${edad} años. La categoría Kids es solo para menores de 15 años.`);
         }
         if ((persona.distancia === '5k' || persona.distancia === '10k') && edad < 15) {
-            errors.push("Las categorías 5K y 10K requieren al menos 15 años de edad.");
+            errors.push(`Esta persona tiene ${edad} años. Las categorías 5K y 10K requieren al menos 15 años de edad.`);
         }
         
         if (!persona.genero) {
@@ -293,6 +345,14 @@ const Registrar_compra = () => {
         }
         if (!persona.acepta_deslinde) {
             errors.push("Debe leer y aceptar el deslinde de responsabilidad para continuar.");
+        }
+        if (!persona.declara_certificado_medico) {
+            errors.push("Debe declarar que llevará su certificado médico para retirar el kit deportivo.");
+        }
+
+        // Validación para certificado de discapacidad si es categoría inclusiva
+        if (persona.distancia === 'discapacitado' && !persona.declara_certificado_discapacidad) {
+            errors.push("Debe declarar que llevará su certificado de discapacidad para la categoría inclusiva.");
         }
 
         return errors;
@@ -374,16 +434,6 @@ const Registrar_compra = () => {
     };
 
     const handleFinalizarInscripcion = async () => {
-        // Validar certificado médico para la persona actual
-        if (!certificadoMedico.current.files[0]) {
-            toast.error("El certificado médico es requerido.");
-            return;
-        }
-
-        if (!validateFile(certificadoMedico.current.files[0])) {
-            return;
-        }
-
         setLoading(true);
 
         try {
@@ -391,15 +441,14 @@ const Registrar_compra = () => {
 
             // Agregar datos de todas las personas
             formDataToSend.append("personas", JSON.stringify(personas));
-            formDataToSend.append("inscripciones", JSON.stringify(inscripcionesData));
-
-            // Agregar certificado médico (por ahora uno para todos)
-            formDataToSend.append("certificado_medico", certificadoMedico.current.files[0]);
-
-            // Agregar certificado de discapacidad si es necesario
-            if (certificadoDiscapacidad.current && certificadoDiscapacidad.current.files[0]) {
-                formDataToSend.append("certificado_discapacidad", certificadoDiscapacidad.current.files[0]);
-            }
+            
+            // Agregar datos de inscripciones con descuento aplicado
+            const inscripcionesConDescuento = {
+                ...inscripcionesData,
+                total: totalConDescuento,
+                descuento: descuentoAplicado
+            };
+            formDataToSend.append("inscripciones", JSON.stringify(inscripcionesConDescuento));
 
             const response = await fetch(`${apiUrl}/carrera/registrar`, {
                 headers: {
@@ -409,23 +458,37 @@ const Registrar_compra = () => {
                 body: formDataToSend
             });
 
+            // Verificar si la respuesta es válida
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Error del servidor: ${response.status}`);
+            }
+
             const data = await response.json();
+            console.log('Response data:', data); // Para debug
 
             if (!data.ok) {
-                toast.error(data.msg);
+                throw new Error(data.msg || 'Error desconocido en el servidor');
             } else {
-                // Si hay inscripciones gratuitas únicamente, redirigir directamente a éxito
-                if (inscripcionesData.total === 0) {
-                    toast.success("Registro exitoso. ¡Inscripción completada!");
-                    navigate('/inscripcion-exito');
-                } else {
+                // Si hay inscripciones gratuitas únicamente o el total con descuento es 0, redirigir directamente a éxito
+                if (totalConDescuento === 0 || data.data?.tipo === 'gratuita') {
+                    toast.success("¡Inscripción completada exitosamente!");
+                    // Limpiar localStorage
+                    localStorage.removeItem('inscripciones-seleccionadas');
+                    setTimeout(() => {
+                        navigate('/inscripcion-exito');
+                    }, 1000);
+                } else if (data.data?.idPreferencia) {
                     setIdPreferencia(data.data.idPreferencia);
                     toast.success("Registro exitoso. Proceda al pago.");
+                } else {
+                    throw new Error('Respuesta inesperada del servidor');
                 }
             }
         } catch (error) {
-            console.error('Error al procesar la inscripción:', error);
-            toast.error('Error al procesar la inscripción');
+            console.error('Error detallado:', error);
+            toast.error(error.message || 'Error al procesar la inscripción');
         } finally {
             setLoading(false);
         }
@@ -445,8 +508,20 @@ const Registrar_compra = () => {
         return distancia === 'kid' || distancia === 'discapacitado';
     };
 
-    // Verificar si hay inscripciones de discapacitado para mostrar campo adicional
+    // Verificar si hay inscripciones de discapacitado para mostrar declaración adicional
     const tieneInscripcionDiscapacitado = personas.some(persona => persona.distancia === 'discapacitado');
+
+    // Calcular totales con descuento
+    const totalSinDescuento = Object.keys(inscripcionesData || {}).reduce((total, key) => {
+        if (key !== 'precios' && key !== 'total' && inscripcionesData[key]) {
+            return total + (inscripcionesData[key] * (inscripcionesData.precios?.[key] || 0));
+        }
+        return total;
+    }, 0);
+
+    const montoDescuento = descuentoAplicado ? descuentoAplicado.descuento : 0;
+    const totalConDescuento = Math.max(0, totalSinDescuento - montoDescuento);
+    const hayInscripcionesPagas = totalSinDescuento > 0;
 
     if (!inscripcionesData || personas.length === 0) {
         return (
@@ -549,6 +624,145 @@ const Registrar_compra = () => {
                                             </Button>
                                         )}
                                     </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <Label htmlFor="dni" value="DNI" />
+                                            <TextInput
+                                                id="dni"
+                                                type="text"
+                                                placeholder="DNI sin puntos"
+                                                required
+                                                value={personaActualData.dni}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="nombre" value="Nombre" />
+                                            <TextInput
+                                                id="nombre"
+                                                type="text"
+                                                placeholder="Nombre"
+                                                required
+                                                value={personaActualData.nombre}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="apellido" value="Apellido" />
+                                            <TextInput
+                                                id="apellido"
+                                                type="text"
+                                                placeholder="Apellido"
+                                                required
+                                                value={personaActualData.apellido}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="fecha_nacimiento" value="Fecha de Nacimiento" />
+                                            <TextInput
+                                                id="fecha_nacimiento"
+                                                type="date"
+                                                required
+                                                value={personaActualData.fecha_nacimiento}
+                                                onChange={handleInputChange}
+                                                onBlur={handleFechaNacimientoBlur}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="genero" value="Género" />
+                                            <Select id="genero" required value={personaActualData.genero} onChange={handleInputChange}>
+                                                <option value="">Selecciona</option>
+                                                <option value="masculino">Masculino</option>
+                                                <option value="femenino">Femenino</option>
+                                                <option value="otro">Otro</option>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="email" value="Email" />
+                                            <TextInput
+                                                id="email"
+                                                type="email"
+                                                placeholder="tu@email.com"
+                                                required
+                                                value={personaActualData.email}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="telefono" value="Teléfono" />
+                                            <TextInput
+                                                id="telefono"
+                                                type="tel"
+                                                placeholder="2664123456"
+                                                required
+                                                value={personaActualData.telefono}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="domicilio" value="Domicilio" />
+                                            <TextInput
+                                                id="domicilio"
+                                                type="text"
+                                                placeholder="Dirección completa"
+                                                required
+                                                value={personaActualData.domicilio}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="ciudad" value="Ciudad" />
+                                            <TextInput
+                                                id="ciudad"
+                                                type="text"
+                                                placeholder="Ciudad"
+                                                required
+                                                value={personaActualData.ciudad}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="provincia" value="Provincia" />
+                                            <TextInput
+                                                id="provincia"
+                                                type="text"
+                                                placeholder="Provincia"
+                                                required
+                                                value={personaActualData.provincia}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="pais" value="País" />
+                                            <TextInput
+                                                id="pais"
+                                                type="text"
+                                                value={personaActualData.pais}
+                                                onChange={handleInputChange}
+                                                readOnly
+                                                className="bg-gray-100 cursor-not-allowed"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="codigo_postal" value="Código Postal" />
+                                            <TextInput
+                                                id="codigo_postal"
+                                                type="text"
+                                                placeholder="5700"
+                                                required
+                                                value={personaActualData.codigo_postal}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Contacto de emergencia */}
+                                <div className="bg-red-50 rounded-xl p-6 border border-red-200">
+                                    <h3 className="text-xl font-bold mb-4 text-red-900 flex items-center">
+                                        <HiOutlinePhone className="mr-2" /> Contacto de Emergencia
+                                    </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
                                             <Label htmlFor="contacto_emergencia_nombre" value="Nombre" />
@@ -671,35 +885,63 @@ const Registrar_compra = () => {
                                     </div>
                                 </div>
 
-                                {/* Certificado médico (solo para la última persona) */}
-                                {personaActual === totalPersonas - 1 && (
-                                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                                        <h3 className="text-xl font-bold mb-4 text-gray-900">Documentación</h3>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <Label htmlFor="certificado_medico" value="Certificado Médico (para todos los participantes)" />
-                                                <FileInput id="certificado_medico" ref={certificadoMedico} />
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    Formato: PDF o JPG. Máximo 7MB. Un certificado vale para todos los participantes de esta inscripción.
+                                {/* Certificados y documentación - Solo para la última persona */}
+                                {personaActual === totalPersonas - 1 && tieneInscripcionDiscapacitado && (
+                                    <div className="bg-orange-50 rounded-xl p-6 border border-orange-200">
+                                        <h3 className="text-xl font-bold mb-4 text-orange-900">Documentación Especial</h3>
+                                        <div className="flex items-start gap-3">
+                                            <Checkbox
+                                                id="declara_certificado_discapacidad"
+                                                checked={personas.some(p => p.distancia === 'discapacitado') ? 
+                                                    personas.find(p => p.distancia === 'discapacitado')?.declara_certificado_discapacidad || false : false}
+                                                onChange={(e) => {
+                                                    const newPersonas = [...personas];
+                                                    newPersonas.forEach(persona => {
+                                                        if (persona.distancia === 'discapacitado') {
+                                                            persona.declara_certificado_discapacidad = e.target.checked;
+                                                        }
+                                                    });
+                                                    setPersonas(newPersonas);
+                                                }}
+                                                className="mt-1"
+                                            />
+                                            <div className="flex-1">
+                                                <Label htmlFor="declara_certificado_discapacidad" className="text-orange-900 font-semibold">
+                                                    Certificado de Discapacidad
+                                                </Label>
+                                                <p className="text-orange-800 text-sm mt-1">
+                                                    Declaro que llevaré mi certificado de discapacidad para validar mi participación en la categoría inclusiva el día del evento.
                                                 </p>
                                             </div>
-                                            
-                                            {/* Certificado de discapacidad si hay inscripciones de esa categoría */}
-                                            {tieneInscripcionDiscapacitado && (
-                                                <div>
-                                                    <Label htmlFor="certificado_discapacidad" value="Certificado de Discapacidad (para participantes de categoría inclusiva)" />
-                                                    <FileInput id="certificado_discapacidad" ref={certificadoDiscapacidad} />
-                                                    <p className="text-sm text-gray-500 mt-1">
-                                                        Formato: PDF o JPG. Máximo 7MB. Requerido para participantes de la categoría inclusiva.
-                                                    </p>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Términos y condiciones */}
                                 <div className="space-y-4">
+                                    {/* Declaración del certificado médico */}
+                                    <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                                        <div className="flex items-start gap-3">
+                                            <Checkbox
+                                                id="declara_certificado_medico"
+                                                checked={personaActualData.declara_certificado_medico}
+                                                onChange={handleInputChange}
+                                                className="mt-1"
+                                            />
+                                            <div className="flex-1">
+                                                <Label htmlFor="declara_certificado_medico" className="text-blue-900 font-semibold">
+                                                    Certificado Médico
+                                                </Label>
+                                                <p className="text-blue-800 text-sm mt-1">
+                                                    {(personaActualData.distancia === 'kid' || personaActualData.distancia === 'discapacitado') 
+                                                        ? "Declaro que llevaré mi certificado médico apto para la práctica deportiva el día del evento."
+                                                        : "Declaro que llevaré mi certificado médico apto para la práctica deportiva para retirar el kit deportivo el día del evento."
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="flex items-center gap-2">
                                         <Checkbox
                                             id="acepta_promocion"
@@ -807,24 +1049,98 @@ const Registrar_compra = () => {
                                 })}
                             </div>
 
+                            {/* Código de descuento - Solo para inscripciones pagas */}
+                            {hayInscripcionesPagas && (
+                                <div className="border-t border-gray-600 pt-4 mb-4">
+                                    <h3 className="font-semibold text-gray-300 mb-3">Código de Descuento</h3>
+                                    {!descuentoAplicado ? (
+                                        <div className="space-y-3">
+                                            <div className="flex gap-2">
+                                                <TextInput
+                                                    id="codigoDescuento"
+                                                    type="text"
+                                                    placeholder="Ingresa tu código"
+                                                    value={codigoDescuento}
+                                                    onChange={(e) => setCodigoDescuento(e.target.value.toUpperCase())}
+                                                    className="flex-1"
+                                                    onKeyPress={(e) => e.key === 'Enter' && aplicarCodigoDescuento()}
+                                                />
+                                                <Button
+                                                    onClick={aplicarCodigoDescuento}
+                                                    disabled={aplicandoCodigo || !codigoDescuento.trim()}
+                                                    className="bg-green-600 hover:bg-green-700"
+                                                    size="sm"
+                                                >
+                                                    {aplicandoCodigo ? <Spinner size="sm" /> : 'Aplicar'}
+                                                </Button>
+                                            </div>
+                                            <p className="text-xs text-gray-400">
+                                                Si perteneces a una institución deportiva, ingresa tu código para obtener descuento.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-green-600/20 border border-green-400/30 rounded-lg p-3">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-bold text-green-400">{descuentoAplicado.codigo}</p>
+                                                    <p className="text-xs text-green-300">{descuentoAplicado.nombre}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-green-400">-${descuentoAplicado.descuento.toLocaleString()}</span>
+                                                    <Button
+                                                        onClick={removerCodigoDescuento}
+                                                        color="failure"
+                                                        size="xs"
+                                                    >
+                                                        ✕
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="border-t border-gray-600 pt-4 mb-6">
-                                <div className="flex justify-between items-center text-lg">
-                                    <span className="font-bold">Total a pagar:</span>
-                                    <span className="font-black text-2xl text-blue-400">
-                                        {inscripcionesData.total === 0 ? (
-                                            <span className="flex items-center gap-2 text-green-400">
-                                                <HiOutlineHeart />
-                                                GRATIS
-                                            </span>
-                                        ) : (
-                                            `${inscripcionesData.total.toLocaleString()}`
-                                        )}
-                                    </span>
+                                <div className="space-y-2">
+                                    {totalSinDescuento > 0 && (
+                                        <div className="flex justify-between text-sm text-gray-400">
+                                            <span>Subtotal:</span>
+                                            <span>${totalSinDescuento.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    {descuentoAplicado && (
+                                        <div className="flex justify-between text-sm text-green-400">
+                                            <span>Descuento ({descuentoAplicado.codigo}):</span>
+                                            <span>-${descuentoAplicado.descuento.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="border-t border-gray-600 pt-2 mt-2">
+                                    <div className="flex justify-between items-center text-lg">
+                                        <span className="font-bold">Total a pagar:</span>
+                                        <span className="font-black text-2xl text-blue-400">
+                                            {totalConDescuento === 0 ? (
+                                                <span className="flex items-center gap-2 text-green-400">
+                                                    <HiOutlineHeart />
+                                                    GRATIS
+                                                </span>
+                                            ) : (
+                                                `${totalConDescuento.toLocaleString()}`
+                                            )}
+                                        </span>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-gray-400 mt-2">
                                     Total de personas: {totalPersonas}
                                 </p>
-                                {inscripcionesData.total === 0 && (
+                                {totalConDescuento === 0 && totalSinDescuento > 0 && (
+                                    <p className="text-sm text-green-400 mt-2 flex items-center gap-1">
+                                        <HiOutlineHeart className="w-4 h-4" />
+                                        ¡Descuento total aplicado!
+                                    </p>
+                                )}
+                                {totalSinDescuento === 0 && (
                                     <p className="text-sm text-green-400 mt-2 flex items-center gap-1">
                                         <HiOutlineHeart className="w-4 h-4" />
                                         ¡Inscripción completamente gratuita!
@@ -893,7 +1209,7 @@ const Registrar_compra = () => {
                             </div>
 
                             {/* Botón de pago (solo si ya hay preferencia y hay que pagar) */}
-                            {idPreferencia && mpInitialized && inscripcionesData.total > 0 && (
+                            {idPreferencia && mpInitialized && totalConDescuento > 0 && (
                                 <div className="mt-6 pt-6 border-t border-gray-600">
                                     <h3 className="font-semibold mb-3 text-green-400">¡Datos completos!</h3>
                                     <Wallet
@@ -914,13 +1230,18 @@ const Registrar_compra = () => {
                             )}
 
                             {/* Mensaje para inscripciones gratuitas */}
-                            {inscripcionesData.total === 0 && (
+                            {totalConDescuento === 0 && (
                                 <div className="mt-6 pt-6 border-t border-gray-600">
                                     <div className="text-center p-4 bg-green-600/20 rounded-lg border border-green-400/30">
                                         <HiOutlineHeart className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                                        <h3 className="font-semibold text-green-400 mb-2">¡Inscripción Gratuita!</h3>
+                                        <h3 className="font-semibold text-green-400 mb-2">
+                                            {totalSinDescuento > 0 ? '¡Inscripción con Descuento Total!' : '¡Inscripción Gratuita!'}
+                                        </h3>
                                         <p className="text-sm text-green-300">
-                                            Solo necesitas completar todos los datos para finalizar tu inscripción.
+                                            {totalSinDescuento > 0 
+                                                ? 'Tu descuento cubre el costo total de la inscripción.'
+                                                : 'Solo necesitas completar todos los datos para finalizar tu inscripción.'
+                                            }
                                         </p>
                                     </div>
                                 </div>
@@ -937,4 +1258,4 @@ const Registrar_compra = () => {
     );
 };
 
-export default Registrar_compra; 
+export default Registrar_compra;
