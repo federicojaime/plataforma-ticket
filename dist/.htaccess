@@ -1,13 +1,54 @@
+# Habilitar el motor de reescritura
 RewriteEngine On
 
-# Si la solicitud es para un archivo existente, no hagas nada
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
+# Asegurarse de que el SSL funcione correctamente
+RewriteCond %{HTTPS} !=on
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301,NE]
 
-# Redirige todas las solicitudes que no sean para archivos existentes a /ticket/index.html
-RewriteRule ^ticket/(.*)$ /ticket/index.html [L]
+# Si es un archivo o directorio real, no hacer nada
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 
-# Para solicitudes fuera de /ticket/, redirige a /ticket/
-RewriteRule ^$ /ticket/ [R=301,L]
-RewriteRule ^((?!ticket/).*)$ /ticket/$1 [R=301,L]
+# Permitir acceso a los archivos en /assets/
+RewriteCond %{REQUEST_URI} !^/ticket/assets/
+# Permitir acceso a archivos de manifiesto y service worker
+RewriteCond %{REQUEST_URI} !^/ticket/manifest.json
+RewriteCond %{REQUEST_URI} !^/ticket/service-worker.js
+RewriteCond %{REQUEST_URI} !^/ticket/robots.txt
+
+# Redirigir todas las solicitudes a index.html
+RewriteRule ^ /ticket/index.html [L]
+
+# Configuración de cabeceras de seguridad
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    
+    # Cabeceras para recursos estáticos
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "public, max-age=31536000"
+    </FilesMatch>
+    
+    <FilesMatch "\.(ico|pdf|jpg|jpeg|png|gif|svg|webp)$">
+        Header set Cache-Control "public, max-age=31536000"
+    </FilesMatch>
+</IfModule>
+
+# Compresión GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# Manejo de errores
+ErrorDocument 404 /ticket/index.html

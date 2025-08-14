@@ -16,6 +16,45 @@ const Registrar_compra = () => {
     const [showSizeGuide, setShowSizeGuide] = useState(false);
     const navigate = useNavigate();
 
+    // Funciones para calcular edad y categoría
+    const calcularEdad = (fechaNacimiento) => {
+        if (!fechaNacimiento) return 0;
+        
+        const hoy = new Date();
+        const nacimiento = new Date(fechaNacimiento);
+        
+        // Fecha del evento: 7 de septiembre 2025
+        const fechaEvento = new Date('2025-09-07');
+        
+        let edad = fechaEvento.getFullYear() - nacimiento.getFullYear();
+        const mesEvento = fechaEvento.getMonth();
+        const mesNacimiento = nacimiento.getMonth();
+        
+        if (mesEvento < mesNacimiento || (mesEvento === mesNacimiento && fechaEvento.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+        
+        return edad;
+    };
+
+    const obtenerCategoria = (edad) => {
+        if (edad >= 15 && edad <= 19) return "15-19";
+        if (edad >= 20 && edad <= 24) return "20-24";
+        if (edad >= 25 && edad <= 29) return "25-29";
+        if (edad >= 30 && edad <= 34) return "30-34";
+        if (edad >= 35 && edad <= 39) return "35-39";
+        if (edad >= 40 && edad <= 44) return "40-44";
+        if (edad >= 45 && edad <= 49) return "45-49";
+        if (edad >= 50 && edad <= 54) return "50-54";
+        if (edad >= 55 && edad <= 59) return "55-59";
+        if (edad >= 60 && edad <= 64) return "60-64";
+        if (edad >= 65 && edad <= 69) return "65-69";
+        if (edad >= 70 && edad <= 74) return "70-74";
+        if (edad >= 75 && edad <= 79) return "75-79";
+        if (edad >= 80) return "80+";
+        return ""; // Para menores de 15 años
+    };
+
     const [inscripcionesData, setInscripcionesData] = useState(null);
     const [idPreferencia, setIdPreferencia] = useState(null);
     const [mpInitialized, setMpInitialized] = useState(false);
@@ -107,11 +146,43 @@ const Registrar_compra = () => {
     const handleInputChange = (e) => {
         const { id, value, type, checked } = e.target;
         const newPersonas = [...personas];
+        
+        // Actualizar el valor
         newPersonas[personaActual] = {
             ...newPersonas[personaActual],
             [id]: type === 'checkbox' ? checked : value
         };
+        
         setPersonas(newPersonas);
+    };
+
+    // Nueva función para manejar cuando se termina de escribir la fecha
+    const handleFechaNacimientoBlur = (e) => {
+        const value = e.target.value;
+        if (!value) return;
+
+        const edad = calcularEdad(value);
+        const categoria = obtenerCategoria(edad);
+        
+        if (edad < 15) {
+            toast.warning("La edad mínima para participar es 15 años");
+            // Limpiar la fecha de nacimiento
+            const newPersonas = [...personas];
+            newPersonas[personaActual].fecha_nacimiento = '';
+            newPersonas[personaActual].categoria_edad = '';
+            setPersonas(newPersonas);
+            return;
+        }
+        
+        // Actualizar la categoría
+        const newPersonas = [...personas];
+        newPersonas[personaActual].categoria_edad = categoria;
+        setPersonas(newPersonas);
+        
+        // Mostrar la edad calculada al usuario
+        if (categoria) {
+            toast.info(`Edad calculada: ${edad} años - Categoría: ${categoria}`);
+        }
     };
 
     const validateFile = (file) => {
@@ -180,7 +251,7 @@ const Registrar_compra = () => {
             errors.push("El talle de remera es requerido.");
         }
         if (!persona.categoria_edad) {
-            errors.push("La categoría de edad es requerida.");
+            errors.push("La categoría de edad es requerida. Asegúrate de haber ingresado la fecha de nacimiento.");
         }
         if (!persona.acepta_reglamento) {
             errors.push("Debe leer y aceptar el reglamento de la carrera para continuar.");
@@ -441,6 +512,8 @@ const Registrar_compra = () => {
                                                 required
                                                 value={personaActualData.fecha_nacimiento}
                                                 onChange={handleInputChange}
+                                                onBlur={handleFechaNacimientoBlur}
+                                                max="2010-09-07" // Máximo para tener al menos 15 años
                                             />
                                         </div>
                                         <div>
@@ -624,23 +697,29 @@ const Registrar_compra = () => {
                                         </div>
                                         <div>
                                             <Label htmlFor="categoria_edad" value="Categoría de Edad" />
-                                            <Select id="categoria_edad" required value={personaActualData.categoria_edad} onChange={handleInputChange}>
-                                                <option value="">Selecciona</option>
-                                                <option value="15-19">15-19</option>
-                                                <option value="20-24">20-24</option>
-                                                <option value="25-29">25-29</option>
-                                                <option value="30-34">30-34</option>
-                                                <option value="35-39">35-39</option>
-                                                <option value="40-44">40-44</option>
-                                                <option value="45-49">45-49</option>
-                                                <option value="50-54">50-54</option>
-                                                <option value="55-59">55-59</option>
-                                                <option value="60-64">60-64</option>
-                                                <option value="65-69">65-69</option>
-                                                <option value="70-74">70-74</option>
-                                                <option value="75-79">75-79</option>
-                                                <option value="80+">80+</option>
-                                            </Select>
+                                            <div className="relative">
+                                                <TextInput
+                                                    id="categoria_edad_display"
+                                                    type="text"
+                                                    value={personaActualData.categoria_edad ? 
+                                                        `${personaActualData.categoria_edad} años` : 
+                                                        'Selecciona fecha de nacimiento primero'
+                                                    }
+                                                    readOnly
+                                                    className="bg-gray-100 cursor-not-allowed"
+                                                />
+                                                {personaActualData.fecha_nacimiento && (
+                                                    <div className="mt-1 text-sm text-gray-600">
+                                                        Edad al 7 de Septiembre 2025: {calcularEdad(personaActualData.fecha_nacimiento)} años
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* Campo oculto para enviar el valor real */}
+                                            <input
+                                                type="hidden"
+                                                id="categoria_edad"
+                                                value={personaActualData.categoria_edad}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -786,6 +865,11 @@ const Registrar_compra = () => {
                                                 <span className="text-xs px-2 py-1 rounded-full bg-gray-600 text-gray-200">
                                                     {persona.distancia.toUpperCase()}
                                                 </span>
+                                                {persona.categoria_edad && (
+                                                    <span className="text-xs px-2 py-1 rounded-full bg-green-600 text-green-200">
+                                                        {persona.categoria_edad}
+                                                    </span>
+                                                )}
                                                 {personas.length > 1 && (
                                                     <button
                                                         onClick={() => handleEliminarPersona(index)}
@@ -799,6 +883,11 @@ const Registrar_compra = () => {
                                         </div>
                                         {index === personaActual && (
                                             <p className="text-xs text-blue-300 mt-1">← Completando datos</p>
+                                        )}
+                                        {persona.fecha_nacimiento && (
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                Edad: {calcularEdad(persona.fecha_nacimiento)} años
+                                            </p>
                                         )}
                                     </div>
                                 ))}

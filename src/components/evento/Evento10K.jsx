@@ -16,7 +16,7 @@ const Evento = () => {
                 </div>
 
                 <div className="p-6">
-                    <p className="text-gray-700 mb-6">Prepárate para la 1ra Edición de San Francisco Corre, organizado por el Municipio de San Francisco.</p>
+                    <p className="text-gray-700 mb-6">Preparate para la 1ra Edición de San Francisco Corre, organizado por el Municipio de San Francisco.</p>
 
                     <div className="grid md:grid-cols-3 gap-6 mb-8">
                         <EventInfo icon={HiOutlineCalendar} title="Fecha y Hora" info="1 de Agosto de 2024 - 08:00hs." />

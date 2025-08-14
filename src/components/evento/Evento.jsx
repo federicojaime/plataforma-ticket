@@ -144,7 +144,7 @@ const Evento = () => {
                                 ¡Inscribite al 10K del Maestro!
                             </h1>
                             <p className="text-sm sm:text-lg md:text-xl text-blue-100 max-w-2xl">
-                                Elegí tu distancia, completá el pago y prepárate para vivir una experiencia única corriendo por la educación.
+                                Elegí tu distancia, completá el pago y preparate para vivir una experiencia única corriendo por la educación.
                             </p>
                         </div>
                     </div>
