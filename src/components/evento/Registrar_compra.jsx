@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, Checkbox, FileInput, Label, Select, TextInput, Card, Spinner, Radio } from 'flowbite-react';
-import { HiOutlineTicket, HiOutlineUser, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineStar, HiOutlineExclamationCircle, HiOutlineTrash, HiOutlineUserRemove } from 'react-icons/hi';
-import { FaTshirt, FaRunning, FaMedal } from 'react-icons/fa';
+import { HiOutlineTicket, HiOutlineUser, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineStar, HiOutlineExclamationCircle, HiOutlineTrash, HiOutlineUserRemove, HiOutlineHeart } from 'react-icons/hi';
+import { FaTshirt, FaRunning, FaMedal, FaChild, FaWheelchair } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Logo10K from "../../assets/img/10k.png";
@@ -38,6 +38,7 @@ const Registrar_compra = () => {
     };
 
     const obtenerCategoria = (edad) => {
+        if (edad < 15) return "kids";
         if (edad >= 15 && edad <= 19) return "15-19";
         if (edad >= 20 && edad <= 24) return "20-24";
         if (edad >= 25 && edad <= 29) return "25-29";
@@ -52,7 +53,7 @@ const Registrar_compra = () => {
         if (edad >= 70 && edad <= 74) return "70-74";
         if (edad >= 75 && edad <= 79) return "75-79";
         if (edad >= 80) return "80+";
-        return ""; // Para menores de 15 años
+        return "";
     };
 
     const [inscripcionesData, setInscripcionesData] = useState(null);
@@ -90,7 +91,31 @@ const Registrar_compra = () => {
         acepta_reglamento: false,
         acepta_deslinde: false,
         tipo_inscripcion: 'regular',
-        distancia: '5k' // 5k o 10k
+        distancia: '5k', // 5k, 10k, kid, discapacitado
+        certificado_discapacidad: false
+    };
+
+    const CATEGORIES_INFO = {
+        '5k': {
+            name: '5K Categoría',
+            icon: FaRunning,
+            color: 'blue'
+        },
+        '10k': {
+            name: '10K Categoría',
+            icon: FaMedal,
+            color: 'purple'
+        },
+        'kid': {
+            name: 'Categoría Kids',
+            icon: FaChild,
+            color: 'green'
+        },
+        'discapacitado': {
+            name: 'Categoría Inclusiva',
+            icon: FaWheelchair,
+            color: 'orange'
+        }
     };
 
     const apiUrl = import.meta.env.VITE_API_URL;
@@ -110,21 +135,26 @@ const Registrar_compra = () => {
         // Crear array de personas según las inscripciones
         const nuevasPersonas = [];
 
-        // Agregar personas para 5K
-        for (let i = 0; i < datos['5k']; i++) {
-            nuevasPersonas.push({
-                ...personaTemplate,
-                distancia: '5k'
-            });
-        }
-
-        // Agregar personas para 10K
-        for (let i = 0; i < datos['10k']; i++) {
-            nuevasPersonas.push({
-                ...personaTemplate,
-                distancia: '10k'
-            });
-        }
+        // Agregar personas para cada categoría
+        const categorias = ['5k', '10k', 'kid', 'discapacitado'];
+        
+        categorias.forEach(categoria => {
+            if (datos[categoria]) {
+                for (let i = 0; i < datos[categoria]; i++) {
+                    const nuevaPersona = {
+                        ...personaTemplate,
+                        distancia: categoria
+                    };
+                    
+                    // Para categorías gratuitas, no incluir talle de remera
+                    if (categoria === 'kid' || categoria === 'discapacitado') {
+                        nuevaPersona.talle_remera = 'No incluido';
+                    }
+                    
+                    nuevasPersonas.push(nuevaPersona);
+                }
+            }
+        });
 
         setPersonas(nuevasPersonas);
     }, [navigate]);
@@ -164,23 +194,15 @@ const Registrar_compra = () => {
         const edad = calcularEdad(value);
         const categoria = obtenerCategoria(edad);
         
-        if (edad < 15) {
-            toast.warning("La edad mínima para participar es 15 años");
-            // Limpiar la fecha de nacimiento
-            const newPersonas = [...personas];
-            newPersonas[personaActual].fecha_nacimiento = '';
-            newPersonas[personaActual].categoria_edad = '';
-            setPersonas(newPersonas);
-            return;
-        }
-        
         // Actualizar la categoría
         const newPersonas = [...personas];
         newPersonas[personaActual].categoria_edad = categoria;
         setPersonas(newPersonas);
         
-        // Mostrar la edad calculada al usuario
-        if (categoria) {
+        // Mostrar información relevante al usuario
+        if (edad < 15 && newPersonas[personaActual].distancia !== 'kid') {
+            toast.info(`Edad calculada: ${edad} años - Categoría Kids recomendada`);
+        } else if (categoria) {
             toast.info(`Edad calculada: ${edad} años - Categoría: ${categoria}`);
         }
     };
@@ -204,6 +226,7 @@ const Registrar_compra = () => {
 
     const validatePersona = (persona) => {
         const errors = [];
+        const edad = calcularEdad(persona.fecha_nacimiento);
 
         if (!/^\d{7,8}$/.test(persona.dni)) {
             errors.push("El DNI debe tener entre 7 y 8 dígitos.");
@@ -217,6 +240,15 @@ const Registrar_compra = () => {
         if (!persona.fecha_nacimiento) {
             errors.push("La fecha de nacimiento es requerida.");
         }
+        
+        // Validación específica para cada categoría
+        if (persona.distancia === 'kid' && edad >= 15) {
+            errors.push("La categoría Kids es solo para menores de 15 años.");
+        }
+        if ((persona.distancia === '5k' || persona.distancia === '10k') && edad < 15) {
+            errors.push("Las categorías 5K y 10K requieren al menos 15 años de edad.");
+        }
+        
         if (!persona.genero) {
             errors.push("El género es requerido.");
         }
@@ -247,9 +279,12 @@ const Registrar_compra = () => {
         if (!/^\d{10}$/.test(persona.contacto_emergencia_telefono)) {
             errors.push("El teléfono del contacto de emergencia debe contener 10 dígitos.");
         }
-        if (!persona.talle_remera) {
+        
+        // Solo validar talle de remera para categorías que la incluyen
+        if ((persona.distancia === '5k' || persona.distancia === '10k') && !persona.talle_remera) {
             errors.push("El talle de remera es requerido.");
         }
+        
         if (!persona.categoria_edad) {
             errors.push("La categoría de edad es requerida. Asegúrate de haber ingresado la fecha de nacimiento.");
         }
@@ -288,15 +323,17 @@ const Registrar_compra = () => {
                 const personaEliminada = personas[indexToDelete];
                 const nuevasInscripciones = { ...inscripcionesData };
 
-                if (personaEliminada.distancia === '5k') {
-                    nuevasInscripciones['5k'] = Math.max(0, nuevasInscripciones['5k'] - 1);
-                } else {
-                    nuevasInscripciones['10k'] = Math.max(0, nuevasInscripciones['10k'] - 1);
+                if (nuevasInscripciones[personaEliminada.distancia]) {
+                    nuevasInscripciones[personaEliminada.distancia] = Math.max(0, nuevasInscripciones[personaEliminada.distancia] - 1);
                 }
 
                 // Recalcular total
-                nuevasInscripciones.total = (nuevasInscripciones['5k'] * nuevasInscripciones.precios['5k']) +
-                    (nuevasInscripciones['10k'] * nuevasInscripciones.precios['10k']);
+                nuevasInscripciones.total = Object.keys(nuevasInscripciones.precios).reduce((total, key) => {
+                    if (nuevasInscripciones[key]) {
+                        return total + (nuevasInscripciones[key] * nuevasInscripciones.precios[key]);
+                    }
+                    return total;
+                }, 0);
 
                 setInscripcionesData(nuevasInscripciones);
 
@@ -359,6 +396,11 @@ const Registrar_compra = () => {
             // Agregar certificado médico (por ahora uno para todos)
             formDataToSend.append("certificado_medico", certificadoMedico.current.files[0]);
 
+            // Agregar certificado de discapacidad si es necesario
+            if (certificadoDiscapacidad.current && certificadoDiscapacidad.current.files[0]) {
+                formDataToSend.append("certificado_discapacidad", certificadoDiscapacidad.current.files[0]);
+            }
+
             const response = await fetch(`${apiUrl}/carrera/registrar`, {
                 headers: {
                     'Authorization': user.jwt,
@@ -372,8 +414,14 @@ const Registrar_compra = () => {
             if (!data.ok) {
                 toast.error(data.msg);
             } else {
-                setIdPreferencia(data.data.idPreferencia);
-                toast.success("Registro exitoso. Proceda al pago.");
+                // Si hay inscripciones gratuitas únicamente, redirigir directamente a éxito
+                if (inscripcionesData.total === 0) {
+                    toast.success("Registro exitoso. ¡Inscripción completada!");
+                    navigate('/inscripcion-exito');
+                } else {
+                    setIdPreferencia(data.data.idPreferencia);
+                    toast.success("Registro exitoso. Proceda al pago.");
+                }
             }
         } catch (error) {
             console.error('Error al procesar la inscripción:', error);
@@ -389,6 +437,17 @@ const Registrar_compra = () => {
         navigate('/fallo-pago');
     };
 
+    const getDistanciaInfo = (distancia) => {
+        return CATEGORIES_INFO[distancia] || CATEGORIES_INFO['5k'];
+    };
+
+    const isGratuita = (distancia) => {
+        return distancia === 'kid' || distancia === 'discapacitado';
+    };
+
+    // Verificar si hay inscripciones de discapacitado para mostrar campo adicional
+    const tieneInscripcionDiscapacitado = personas.some(persona => persona.distancia === 'discapacitado');
+
     if (!inscripcionesData || personas.length === 0) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -402,6 +461,7 @@ const Registrar_compra = () => {
 
     const personaActualData = personas[personaActual];
     const totalPersonas = personas.length;
+    const distanciaInfo = getDistanciaInfo(personaActualData.distancia);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -420,7 +480,13 @@ const Registrar_compra = () => {
                         />
                         <h1 className="text-3xl md:text-4xl font-black">Datos de Inscripción</h1>
                         <p className="text-lg">
-                            Persona {personaActual + 1} de {totalPersonas} - {personaActualData.distancia.toUpperCase()} {personaActualData.distancia === '5k' ? '' : ''}
+                            Persona {personaActual + 1} de {totalPersonas} - {distanciaInfo.name}
+                            {isGratuita(personaActualData.distancia) && (
+                                <span className="ml-2 inline-flex items-center gap-1 text-green-400">
+                                    <HiOutlineHeart className="w-4 h-4" />
+                                    GRATUITA
+                                </span>
+                            )}
                         </p>
                     </div>
                 </div>
@@ -451,11 +517,24 @@ const Registrar_compra = () => {
                                 </div>
 
                                 {/* Datos Personales */}
-                                <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                                <div className={`${distanciaInfo.color === 'blue' ? 'bg-blue-50 border-blue-200' : 
+                                                distanciaInfo.color === 'purple' ? 'bg-purple-50 border-purple-200' :
+                                                distanciaInfo.color === 'green' ? 'bg-green-50 border-green-200' :
+                                                'bg-orange-50 border-orange-200'} rounded-xl p-6 border`}>
                                     <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-xl font-bold text-blue-900 flex items-center">
-                                            <HiOutlineUser className="mr-2" />
-                                            Datos Personales - {personaActualData.distancia.toUpperCase()}
+                                        <h3 className={`text-xl font-bold flex items-center ${
+                                            distanciaInfo.color === 'blue' ? 'text-blue-900' : 
+                                            distanciaInfo.color === 'purple' ? 'text-purple-900' :
+                                            distanciaInfo.color === 'green' ? 'text-green-900' :
+                                            'text-orange-900'
+                                        }`}>
+                                            <distanciaInfo.icon className="mr-2" />
+                                            Datos Personales - {distanciaInfo.name}
+                                            {isGratuita(personaActualData.distancia) && (
+                                                <span className="ml-2 text-sm bg-green-500 text-white px-2 py-1 rounded-full">
+                                                    GRATUITA
+                                                </span>
+                                            )}
                                         </h3>
                                         {personas.length > 1 && (
                                             <Button
@@ -470,153 +549,6 @@ const Registrar_compra = () => {
                                             </Button>
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <Label htmlFor="dni" value="DNI" />
-                                            <TextInput
-                                                id="dni"
-                                                type="text"
-                                                placeholder="Tu DNI"
-                                                required
-                                                value={personaActualData.dni}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="nombre" value="Nombre" />
-                                            <TextInput
-                                                id="nombre"
-                                                type="text"
-                                                placeholder="Tu nombre"
-                                                required
-                                                value={personaActualData.nombre}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="apellido" value="Apellido" />
-                                            <TextInput
-                                                id="apellido"
-                                                type="text"
-                                                placeholder="Tu apellido"
-                                                required
-                                                value={personaActualData.apellido}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="fecha_nacimiento" value="Fecha de Nacimiento" />
-                                            <TextInput
-                                                id="fecha_nacimiento"
-                                                type="date"
-                                                required
-                                                value={personaActualData.fecha_nacimiento}
-                                                onChange={handleInputChange}
-                                                onBlur={handleFechaNacimientoBlur}
-                                                max="2010-09-07" // Máximo para tener al menos 15 años
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="genero" value="Género" />
-                                            <Select id="genero" required value={personaActualData.genero} onChange={handleInputChange}>
-                                                <option value="">Selecciona</option>
-                                                <option value="Masculino">Masculino</option>
-                                                <option value="Femenino">Femenino</option>
-                                                <option value="Otro">Otro</option>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Contacto */}
-                                <div className="bg-green-50 rounded-xl p-6 border border-green-200">
-                                    <h3 className="text-xl font-bold mb-4 text-green-900 flex items-center">
-                                        <HiOutlinePhone className="mr-2" /> Contacto
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <Label htmlFor="email" value="Email" />
-                                            <TextInput
-                                                id="email"
-                                                type="email"
-                                                placeholder="tu@email.com"
-                                                required
-                                                value={personaActualData.email}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="telefono" value="Teléfono" />
-                                            <TextInput
-                                                id="telefono"
-                                                type="tel"
-                                                placeholder="Tu teléfono"
-                                                required
-                                                value={personaActualData.telefono}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Dirección */}
-                                <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
-                                    <h3 className="text-xl font-bold mb-4 text-purple-900 flex items-center">
-                                        <HiOutlineLocationMarker className="mr-2" /> Dirección
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <Label htmlFor="domicilio" value="Domicilio" />
-                                            <TextInput
-                                                id="domicilio"
-                                                type="text"
-                                                placeholder="Tu domicilio"
-                                                required
-                                                value={personaActualData.domicilio}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="ciudad" value="Ciudad" />
-                                            <TextInput
-                                                id="ciudad"
-                                                type="text"
-                                                placeholder="Tu ciudad"
-                                                required
-                                                value={personaActualData.ciudad}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="provincia" value="Provincia" />
-                                            <TextInput
-                                                id="provincia"
-                                                type="text"
-                                                placeholder="Tu provincia"
-                                                required
-                                                value={personaActualData.provincia}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="codigo_postal" value="Código Postal" />
-                                            <TextInput
-                                                id="codigo_postal"
-                                                type="text"
-                                                placeholder="Tu código postal"
-                                                required
-                                                value={personaActualData.codigo_postal}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Contacto de Emergencia */}
-                                <div className="bg-red-50 rounded-xl p-6 border border-red-200">
-                                    <h3 className="text-xl font-bold mb-4 text-red-900 flex items-center">
-                                        <HiOutlineExclamationCircle className="mr-2" /> Contacto de Emergencia
-                                    </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
                                             <Label htmlFor="contacto_emergencia_nombre" value="Nombre" />
@@ -663,27 +595,42 @@ const Registrar_compra = () => {
                                         <div className="relative">
                                             <Label htmlFor="talle_remera" className="flex items-center mb-2">
                                                 Talle de Remera
-                                                <FaTshirt
-                                                    className="ml-2 text-gray-500 cursor-pointer"
-                                                    onMouseEnter={() => setShowSizeGuide(true)}
-                                                    onMouseLeave={() => setShowSizeGuide(false)}
-                                                    onClick={() => setShowSizeGuide(!showSizeGuide)}
-                                                />
+                                                {(personaActualData.distancia === 'kid' || personaActualData.distancia === 'discapacitado') && (
+                                                    <span className="ml-2 text-sm text-gray-500">(No incluido)</span>
+                                                )}
+                                                {(personaActualData.distancia === '5k' || personaActualData.distancia === '10k') && (
+                                                    <FaTshirt
+                                                        className="ml-2 text-gray-500 cursor-pointer"
+                                                        onMouseEnter={() => setShowSizeGuide(true)}
+                                                        onMouseLeave={() => setShowSizeGuide(false)}
+                                                        onClick={() => setShowSizeGuide(!showSizeGuide)}
+                                                    />
+                                                )}
                                             </Label>
-                                            {showSizeGuide && (
+                                            {showSizeGuide && (personaActualData.distancia === '5k' || personaActualData.distancia === '10k') && (
                                                 <div className="absolute z-10 p-2 bg-white border rounded shadow-lg">
                                                     <img src={tallesImageUrl} alt="Guía de talles" className="max-w-xs" />
                                                 </div>
                                             )}
-                                            <Select id="talle_remera" required value={personaActualData.talle_remera} onChange={handleInputChange}>
-                                                <option value="">Selecciona</option>
-                                                <option value="XS">XS</option>
-                                                <option value="S">S</option>
-                                                <option value="M">M</option>
-                                                <option value="L">L</option>
-                                                <option value="XL">XL</option>
-                                                <option value="XXL">XXL</option>
-                                            </Select>
+                                            {(personaActualData.distancia === 'kid' || personaActualData.distancia === 'discapacitado') ? (
+                                                <TextInput
+                                                    id="talle_remera"
+                                                    type="text"
+                                                    value="No incluido"
+                                                    readOnly
+                                                    className="bg-gray-100 cursor-not-allowed"
+                                                />
+                                            ) : (
+                                                <Select id="talle_remera" required value={personaActualData.talle_remera} onChange={handleInputChange}>
+                                                    <option value="">Selecciona</option>
+                                                    <option value="XS">XS</option>
+                                                    <option value="S">S</option>
+                                                    <option value="M">M</option>
+                                                    <option value="L">L</option>
+                                                    <option value="XL">XL</option>
+                                                    <option value="XXL">XXL</option>
+                                                </Select>
+                                            )}
                                         </div>
                                         <div>
                                             <Label htmlFor="team_agrupacion" value="Team o Agrupación (Opcional)" />
@@ -702,7 +649,7 @@ const Registrar_compra = () => {
                                                     id="categoria_edad_display"
                                                     type="text"
                                                     value={personaActualData.categoria_edad ? 
-                                                        `${personaActualData.categoria_edad} años` : 
+                                                        `${personaActualData.categoria_edad} ${personaActualData.categoria_edad === 'kids' ? '(menores de 15)' : 'años'}` : 
                                                         'Selecciona fecha de nacimiento primero'
                                                     }
                                                     readOnly
@@ -728,12 +675,25 @@ const Registrar_compra = () => {
                                 {personaActual === totalPersonas - 1 && (
                                     <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                                         <h3 className="text-xl font-bold mb-4 text-gray-900">Documentación</h3>
-                                        <div>
-                                            <Label htmlFor="certificado_medico" value="Certificado Médico (para todos los participantes)" />
-                                            <FileInput id="certificado_medico" ref={certificadoMedico} />
-                                            <p className="text-sm text-gray-500 mt-1">
-                                                Formato: PDF o JPG. Máximo 7MB. Un certificado vale para todos los participantes de esta inscripción.
-                                            </p>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <Label htmlFor="certificado_medico" value="Certificado Médico (para todos los participantes)" />
+                                                <FileInput id="certificado_medico" ref={certificadoMedico} />
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    Formato: PDF o JPG. Máximo 7MB. Un certificado vale para todos los participantes de esta inscripción.
+                                                </p>
+                                            </div>
+                                            
+                                            {/* Certificado de discapacidad si hay inscripciones de esa categoría */}
+                                            {tieneInscripcionDiscapacitado && (
+                                                <div>
+                                                    <Label htmlFor="certificado_discapacidad" value="Certificado de Discapacidad (para participantes de categoría inclusiva)" />
+                                                    <FileInput id="certificado_discapacidad" ref={certificadoDiscapacidad} />
+                                                    <p className="text-sm text-gray-500 mt-1">
+                                                        Formato: PDF o JPG. Máximo 7MB. Requerido para participantes de la categoría inclusiva.
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -794,7 +754,7 @@ const Registrar_compra = () => {
                                         {loading ? (
                                             <Spinner size="sm" />
                                         ) : personaActual === totalPersonas - 1 ? (
-                                            'Finalizar y Pagar →'
+                                            inscripcionesData.total === 0 ? 'Finalizar Inscripción →' : 'Finalizar y Pagar →'
                                         ) : (
                                             'Siguiente →'
                                         )}
@@ -813,88 +773,127 @@ const Registrar_compra = () => {
                             </h2>
 
                             <div className="space-y-4 mb-6">
-                                {inscripcionesData['5k'] > 0 && (
-                                    <div className="flex justify-between items-center p-3 bg-blue-600/20 rounded-lg border border-blue-400/30">
-                                        <div className="flex items-center gap-2">
-                                            <FaRunning className="text-blue-400" />
-                                            <span>5K Categoría × {inscripcionesData['5k']}</span>
-                                        </div>
-                                        <span className="font-bold">${(inscripcionesData['5k'] * inscripcionesData.precios['5k']).toLocaleString()}</span>
-                                    </div>
-                                )}
-
-                                {inscripcionesData['10k'] > 0 && (
-                                    <div className="flex justify-between items-center p-3 bg-purple-600/20 rounded-lg border border-purple-400/30">
-                                        <div className="flex items-center gap-2">
-                                            <FaMedal className="text-purple-400" />
-                                            <span>10K Categoría × {inscripcionesData['10k']}</span>
-                                        </div>
-                                        <span className="font-bold">${(inscripcionesData['10k'] * inscripcionesData.precios['10k']).toLocaleString()}</span>
-                                    </div>
-                                )}
+                                {Object.keys(inscripcionesData).map(key => {
+                                    if (key !== 'precios' && key !== 'total' && inscripcionesData[key] > 0) {
+                                        const categoryInfo = CATEGORIES_INFO[key];
+                                        const isGratuitaCategory = isGratuita(key);
+                                        const colorClass = categoryInfo.color === 'blue' ? 'bg-blue-600/20 border-blue-400/30' :
+                                                           categoryInfo.color === 'purple' ? 'bg-purple-600/20 border-purple-400/30' :
+                                                           categoryInfo.color === 'green' ? 'bg-green-600/20 border-green-400/30' :
+                                                           'bg-orange-600/20 border-orange-400/30';
+                                        const iconColor = categoryInfo.color === 'blue' ? 'text-blue-400' :
+                                                         categoryInfo.color === 'purple' ? 'text-purple-400' :
+                                                         categoryInfo.color === 'green' ? 'text-green-400' :
+                                                         'text-orange-400';
+                                        
+                                        return (
+                                            <div key={key} className={`flex justify-between items-center p-3 rounded-lg border ${colorClass}`}>
+                                                <div className="flex items-center gap-2">
+                                                    <categoryInfo.icon className={iconColor} />
+                                                    <span>{categoryInfo.name} × {inscripcionesData[key]}</span>
+                                                    {isGratuitaCategory && (
+                                                        <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">
+                                                            GRATIS
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="font-bold">
+                                                    {isGratuitaCategory ? 'GRATIS' : `${(inscripcionesData[key] * inscripcionesData.precios[key]).toLocaleString()}`}
+                                                </span>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                })}
                             </div>
 
                             <div className="border-t border-gray-600 pt-4 mb-6">
                                 <div className="flex justify-between items-center text-lg">
                                     <span className="font-bold">Total a pagar:</span>
                                     <span className="font-black text-2xl text-blue-400">
-                                        ${inscripcionesData.total.toLocaleString()}
+                                        {inscripcionesData.total === 0 ? (
+                                            <span className="flex items-center gap-2 text-green-400">
+                                                <HiOutlineHeart />
+                                                GRATIS
+                                            </span>
+                                        ) : (
+                                            `${inscripcionesData.total.toLocaleString()}`
+                                        )}
                                     </span>
                                 </div>
                                 <p className="text-sm text-gray-400 mt-2">
                                     Total de personas: {totalPersonas}
                                 </p>
+                                {inscripcionesData.total === 0 && (
+                                    <p className="text-sm text-green-400 mt-2 flex items-center gap-1">
+                                        <HiOutlineHeart className="w-4 h-4" />
+                                        ¡Inscripción completamente gratuita!
+                                    </p>
+                                )}
                             </div>
 
                             {/* Lista de personas */}
                             <div className="space-y-2">
                                 <h3 className="font-semibold text-gray-300 mb-3">Participantes:</h3>
-                                {personas.map((persona, index) => (
-                                    <div
-                                        key={index}
-                                        className={`p-3 rounded-lg border transition-all ${index === personaActual
-                                            ? 'bg-blue-600/30 border-blue-400 text-white'
-                                            : 'bg-gray-700/50 border-gray-600 text-gray-300'
-                                            }`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-medium">
-                                                {persona.nombre || `Persona ${index + 1}`}
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs px-2 py-1 rounded-full bg-gray-600 text-gray-200">
-                                                    {persona.distancia.toUpperCase()}
+                                {personas.map((persona, index) => {
+                                    const personaInfo = getDistanciaInfo(persona.distancia);
+                                    return (
+                                        <div
+                                            key={index}
+                                            className={`p-3 rounded-lg border transition-all ${index === personaActual
+                                                ? 'bg-blue-600/30 border-blue-400 text-white'
+                                                : 'bg-gray-700/50 border-gray-600 text-gray-300'
+                                                }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium">
+                                                    {persona.nombre || `Persona ${index + 1}`}
                                                 </span>
-                                                {persona.categoria_edad && (
-                                                    <span className="text-xs px-2 py-1 rounded-full bg-green-600 text-green-200">
-                                                        {persona.categoria_edad}
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-xs px-2 py-1 rounded-full ${
+                                                        personaInfo.color === 'blue' ? 'bg-blue-600 text-blue-200' :
+                                                        personaInfo.color === 'purple' ? 'bg-purple-600 text-purple-200' :
+                                                        personaInfo.color === 'green' ? 'bg-green-600 text-green-200' :
+                                                        'bg-orange-600 text-orange-200'
+                                                    }`}>
+                                                        {personaInfo.name}
                                                     </span>
-                                                )}
-                                                {personas.length > 1 && (
-                                                    <button
-                                                        onClick={() => handleEliminarPersona(index)}
-                                                        className="text-red-400 hover:text-red-300 p-1 rounded"
-                                                        title="Eliminar participante"
-                                                    >
-                                                        <HiOutlineUserRemove className="w-4 h-4" />
-                                                    </button>
-                                                )}
+                                                    {isGratuita(persona.distancia) && (
+                                                        <span className="text-xs px-2 py-1 rounded-full bg-green-500 text-green-200">
+                                                            GRATIS
+                                                        </span>
+                                                    )}
+                                                    {persona.categoria_edad && (
+                                                        <span className="text-xs px-2 py-1 rounded-full bg-green-600 text-green-200">
+                                                            {persona.categoria_edad === 'kids' ? 'Kids' : persona.categoria_edad}
+                                                        </span>
+                                                    )}
+                                                    {personas.length > 1 && (
+                                                        <button
+                                                            onClick={() => handleEliminarPersona(index)}
+                                                            className="text-red-400 hover:text-red-300 p-1 rounded"
+                                                            title="Eliminar participante"
+                                                        >
+                                                            <HiOutlineUserRemove className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
+                                            {index === personaActual && (
+                                                <p className="text-xs text-blue-300 mt-1">← Completando datos</p>
+                                            )}
+                                            {persona.fecha_nacimiento && (
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    Edad: {calcularEdad(persona.fecha_nacimiento)} años
+                                                </p>
+                                            )}
                                         </div>
-                                        {index === personaActual && (
-                                            <p className="text-xs text-blue-300 mt-1">← Completando datos</p>
-                                        )}
-                                        {persona.fecha_nacimiento && (
-                                            <p className="text-xs text-gray-400 mt-1">
-                                                Edad: {calcularEdad(persona.fecha_nacimiento)} años
-                                            </p>
-                                        )}
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
-                            {/* Botón de pago (solo si ya hay preferencia) */}
-                            {idPreferencia && mpInitialized && (
+                            {/* Botón de pago (solo si ya hay preferencia y hay que pagar) */}
+                            {idPreferencia && mpInitialized && inscripcionesData.total > 0 && (
                                 <div className="mt-6 pt-6 border-t border-gray-600">
                                     <h3 className="font-semibold mb-3 text-green-400">¡Datos completos!</h3>
                                     <Wallet
@@ -914,6 +913,19 @@ const Registrar_compra = () => {
                                 </div>
                             )}
 
+                            {/* Mensaje para inscripciones gratuitas */}
+                            {inscripcionesData.total === 0 && (
+                                <div className="mt-6 pt-6 border-t border-gray-600">
+                                    <div className="text-center p-4 bg-green-600/20 rounded-lg border border-green-400/30">
+                                        <HiOutlineHeart className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                                        <h3 className="font-semibold text-green-400 mb-2">¡Inscripción Gratuita!</h3>
+                                        <p className="text-sm text-green-300">
+                                            Solo necesitas completar todos los datos para finalizar tu inscripción.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="text-center text-xs text-gray-400 mt-6">
                                 Si necesitas ayuda, por favor <a href="https://instagram.com/codeo.ar" target='_blank' className="text-blue-400 hover:text-blue-300 underline">contáctanos</a>.
                             </div>
@@ -925,4 +937,4 @@ const Registrar_compra = () => {
     );
 };
 
-export default Registrar_compra;
+export default Registrar_compra; 

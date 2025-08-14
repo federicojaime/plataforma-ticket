@@ -7,9 +7,10 @@ import {
     HiOutlineGift,
     HiOutlineDocumentText,
     HiOutlinePhone,
-    HiOutlineMail
+    HiOutlineMail,
+    HiOutlineHeart
 } from 'react-icons/hi';
-import { FaRunning, FaTrophy, FaRoute, FaMedal } from 'react-icons/fa';
+import { FaRunning, FaTrophy, FaRoute, FaMedal, FaChild, FaWheelchair } from 'react-icons/fa';
 import Logo10K from "../../assets/img/10k.png";
 import RunnerBanner from "../../assets/img/runner-banner.jpg";
 
@@ -19,6 +20,7 @@ const EventoInfo = () => {
         { hora: "07:00", actividad: "Calentamiento grupal" },
         { hora: "07:30", actividad: "Largada 10K" },
         { hora: "08:00", actividad: "Largada 5K" },
+        { hora: "08:30", actividad: "Largada Kids y Categoría Inclusiva" },
         { hora: "09:30", actividad: "Premiación y sorteos" },
         { hora: "10:30", actividad: "Cierre del evento" }
     ];
@@ -27,16 +29,55 @@ const EventoInfo = () => {
         { categoria: "10K Masculino", premios: "1°, 2° y 3° puesto general" },
         { categoria: "10K Femenino", premios: "1°, 2° y 3° puesto general" },
         { categoria: "Por categorías", premios: "1° puesto en cada categoría de edad" },
-        { categoria: "5K Participación", premios: "Medalla para todos los finishers" }
+        { categoria: "5K Participación", premios: "Medalla para todos los finishers" },
+        { categoria: "Kids", premios: "Medalla especial para todos los participantes" },
+        { categoria: "Categoría Inclusiva", premios: "Medalla de reconocimiento especial" }
     ];
 
     const incluye = [
         "Remera técnica oficial del evento",
-        "Chip de cronometraje profesional",
+        "Chip de cronometraje profesional (5K y 10K)",
         "Medalla de finisher",
         "Kit del corredor con sorpresas",
         "Hidratación durante el recorrido",
-        "Asistencia médica en el circuito"
+        "Asistencia médica en el circuito",
+        "Kit especial para categoría Kids",
+        "Asistencia especializada para categoría inclusiva"
+    ];
+
+    const categorias = [
+        {
+            name: "5K Categoría",
+            description: "Perfecta para principiantes y familias",
+            icon: FaRunning,
+            color: "blue",
+            price: "Paga",
+            details: "Distancia ideal para quienes se inician en el running"
+        },
+        {
+            name: "10K Categoría",
+            description: "Con cronometraje oficial y premiación",
+            icon: FaTrophy,
+            color: "purple",
+            price: "Paga",
+            details: "Competencia oficial con premios por categorías"
+        },
+        {
+            name: "Categoría Kids",
+            description: "Para menores de 15 años",
+            icon: FaChild,
+            color: "green",
+            price: "GRATUITA",
+            details: "Distancia especial adaptada para los más pequeños"
+        },
+        {
+            name: "Categoría Inclusiva",
+            description: "Para personas con discapacidad",
+            icon: FaWheelchair,
+            color: "orange",
+            price: "GRATUITA",
+            details: "Con asistencia especializada y recorrido adaptado"
+        }
     ];
 
     return (
@@ -101,25 +142,65 @@ const EventoInfo = () => {
                             </div>
                             <div>
                                 <h3 className="font-bold text-gray-900">Hora</h3>
-                                <p className="text-gray-600">Largada 07:30hs</p>
+                                <p className="text-gray-600">Largada desde las 07:30hs</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Distancias */}
+                {/* Categorías Actualizadas */}
                 <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 mb-12">
                     <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Categorías</h2>
-                    <div className="grid md:grid-cols-2 gap-8">
-                        <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-blue-100">
-                            <FaRunning className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                            <h3 className="text-4xl font-black text-blue-700 mb-2">5K</h3>
-                            <p className="text-gray-600 text-sm">Perfecta para principiantes y familias</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {categorias.map((categoria, index) => {
+                            const IconComponent = categoria.icon;
+                            const isGratuita = categoria.price === "GRATUITA";
+                            
+                            return (
+                                <div key={index} className={`text-center p-6 rounded-2xl border relative overflow-hidden transition-transform hover:scale-105 ${
+                                    categoria.color === 'blue' ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100' :
+                                    categoria.color === 'purple' ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100' :
+                                    categoria.color === 'green' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-100' :
+                                    'bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100'
+                                }`}>
+                                    {isGratuita && (
+                                        <div className="absolute top-2 right-2">
+                                            <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                                <HiOutlineHeart className="w-3 h-3" />
+                                                GRATIS
+                                            </span>
+                                        </div>
+                                    )}
+                                    <IconComponent className={`w-12 h-12 mx-auto mb-4 ${
+                                        categoria.color === 'blue' ? 'text-blue-600' :
+                                        categoria.color === 'purple' ? 'text-purple-600' :
+                                        categoria.color === 'green' ? 'text-green-600' :
+                                        'text-orange-600'
+                                    }`} />
+                                    <h3 className={`text-xl font-black mb-2 ${
+                                        categoria.color === 'blue' ? 'text-blue-700' :
+                                        categoria.color === 'purple' ? 'text-purple-700' :
+                                        categoria.color === 'green' ? 'text-green-700' :
+                                        'text-orange-700'
+                                    }`}>
+                                        {categoria.name}
+                                    </h3>
+                                    <p className="text-gray-600 text-sm mb-2">{categoria.description}</p>
+                                    <p className="text-xs text-gray-500">{categoria.details}</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    
+                    {/* Nota especial sobre categorías gratuitas */}
+                    <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl border border-green-100">
+                        <div className="flex items-center justify-center mb-4">
+                            <HiOutlineHeart className="w-8 h-8 text-green-600 mr-3" />
+                            <h3 className="text-xl font-bold text-green-800">Categorías Gratuitas</h3>
                         </div>
-                        <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-100">
-                            <FaTrophy className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-                            <h3 className="text-4xl font-black text-purple-700 mb-2">10K</h3>
-                            <p className="text-gray-600 text-sm">Con cronometraje oficial y premiación</p>
+                        <div className="text-center text-green-700">
+                            <p className="mb-2">Las categorías <strong>Kids</strong> y <strong>Inclusiva</strong> son completamente gratuitas.</p>
+                            <p className="text-sm">Solo incluyen la participación en el evento, sin remera ni kit adicional.</p>
                         </div>
                     </div>
                 </div>
@@ -160,19 +241,71 @@ const EventoInfo = () => {
                     </div>
                 </div>
 
-                {/* Qué incluye */}
+                {/* Qué incluye cada categoría */}
                 <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 mb-12">
                     <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center">
                         <HiOutlineGift className="w-8 h-8 text-green-500 mr-3" />
-                        ¿Qué incluye tu inscripción?
+                        ¿Qué incluye cada categoría?
                     </h2>
-                    <div className="grid md:grid-cols-2 gap-4">
-                        {incluye.map((item, index) => (
-                            <div key={index} className="flex items-center p-4 bg-green-50 rounded-xl border border-green-100">
-                                <FaMedal className="w-6 h-6 text-green-600 mr-4 flex-shrink-0" />
-                                <span className="text-gray-800">{item}</span>
+                    
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* Categorías pagas */}
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-bold text-blue-600 mb-4">Categorías 5K y 10K (Pagas)</h3>
+                            <div className="space-y-3">
+                                <div className="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <FaMedal className="w-6 h-6 text-blue-600 mr-4 flex-shrink-0" />
+                                    <span className="text-gray-800">Remera técnica oficial del evento</span>
+                                </div>
+                                <div className="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <FaMedal className="w-6 h-6 text-blue-600 mr-4 flex-shrink-0" />
+                                    <span className="text-gray-800">Chip de cronometraje profesional</span>
+                                </div>
+                                <div className="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <FaMedal className="w-6 h-6 text-blue-600 mr-4 flex-shrink-0" />
+                                    <span className="text-gray-800">Medalla de finisher</span>
+                                </div>
+                                <div className="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <FaMedal className="w-6 h-6 text-blue-600 mr-4 flex-shrink-0" />
+                                    <span className="text-gray-800">Kit del corredor con sorpresas</span>
+                                </div>
+                                <div className="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <FaMedal className="w-6 h-6 text-blue-600 mr-4 flex-shrink-0" />
+                                    <span className="text-gray-800">Hidratación durante el recorrido</span>
+                                </div>
+                                <div className="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <FaMedal className="w-6 h-6 text-blue-600 mr-4 flex-shrink-0" />
+                                    <span className="text-gray-800">Asistencia médica en el circuito</span>
+                                </div>
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Categorías gratuitas */}
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-bold text-green-600 mb-4 flex items-center">
+                                <HiOutlineHeart className="w-6 h-6 mr-2" />
+                                Categorías Kids e Inclusiva (Gratuitas)
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex items-center p-4 bg-green-50 rounded-xl border border-green-100">
+                                    <FaChild className="w-6 h-6 text-green-600 mr-4 flex-shrink-0" />
+                                    <span className="text-gray-800">Solo participación en el evento</span>
+                                </div>
+                                <div className="flex items-center p-4 bg-green-50 rounded-xl border border-green-100">
+                                    <FaWheelchair className="w-6 h-6 text-green-600 mr-4 flex-shrink-0" />
+                                    <span className="text-gray-800">Asistencia especializada (categoría inclusiva)</span>
+                                </div>
+                                <div className="flex items-center p-4 bg-green-50 rounded-xl border border-green-100">
+                                    <HiOutlineHeart className="w-6 h-6 text-green-600 mr-4 flex-shrink-0" />
+                                    <span className="text-gray-800">Acceso completo al evento</span>
+                                </div>
+                                <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                                    <p className="text-amber-800 text-sm">
+                                        <strong>Nota:</strong> No incluye remera técnica, kit del corredor ni otros elementos físicos.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -184,10 +317,13 @@ const EventoInfo = () => {
                     </h2>
                     <div className="space-y-4 text-gray-700">
                         <p>• Es obligatorio presentar certificado médico apto para la práctica deportiva.</p>
+                        <p>• Para la categoría inclusiva se requiere certificado de discapacidad.</p>
+                        <p>• La categoría Kids es para menores de 15 años únicamente.</p>
                         <p>• La inscripción incluye seguro de accidentes personales durante el evento.</p>
                         <p>• El evento se realizará independientemente de las condiciones climáticas.</p>
                         <p>• Los menores de edad deben estar acompañados por un adulto responsable.</p>
                         <p>• Se requiere uso de calzado deportivo adecuado para running.</p>
+                        <p>• Las categorías gratuitas solo incluyen participación, sin elementos adicionales.</p>
                     </div>
                 </div>
 

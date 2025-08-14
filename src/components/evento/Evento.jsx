@@ -1,4 +1,4 @@
-// src/components/evento/Evento.jsx - Optimizado para Móvil
+// src/components/evento/Evento.jsx - Corregido para categorías gratuitas
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -9,10 +9,11 @@ import {
     HiOutlineClock,
     HiOutlineExclamationCircle,
     HiOutlineTicket,
-    HiOutlineUsers
+    HiOutlineUsers,
+    HiOutlineHeart
 } from "react-icons/hi";
 import { HiOutlineTrophy } from 'react-icons/hi2';
-import { FaRunning, FaMedal, FaTshirt } from "react-icons/fa";
+import { FaRunning, FaMedal, FaTshirt, FaChild, FaWheelchair, FaCheck } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import SkeletonLoader from '../ui/Skeletor';
 
@@ -23,15 +24,61 @@ const Evento = () => {
     const [error, setError] = useState(null);
     const [inscripciones, setInscripciones] = useState({
         '5k': 0,
-        '10k': 0
+        '10k': 0,
+        'kid': 0,
+        'discapacitado': 0
     });
 
     const PRICES = {
         '5k': 1,
-        '10k': 2
+        '10k': 2,
+        'kid': 0,
+        'discapacitado': 0
     };
 
-    const MAX_INSCRIPCIONES = 3;
+    const CATEGORIES_INFO = {
+        '5k': {
+            name: '5K Categoría',
+            description: 'Perfecta para principiantes y familias',
+            icon: FaRunning,
+            color: 'blue',
+            includes: [
+                { icon: FaTshirt, text: 'Remera técnica' },
+                { icon: FaMedal, text: 'Medalla finisher' }
+            ]
+        },
+        '10k': {
+            name: '10K Categoría',
+            description: 'Con cronometraje oficial y premiación',
+            icon: HiOutlineTrophy,
+            color: 'purple',
+            includes: [
+                { icon: FaTshirt, text: 'Remera técnica' },
+                { icon: FaMedal, text: 'Medalla + Premio' }
+            ]
+        },
+        'kid': {
+            name: 'Categoría Kids (hasta 14 años)',
+            description: 'Distancia especial para los más pequeños - ¡GRATUITA!',
+            icon: FaChild,
+            color: 'green',
+            includes: [
+                { icon: FaCheck, text: 'Solo participación' }
+            ]
+        },
+        'discapacitado': {
+            name: 'Categoría Inclusiva',
+            description: 'Para personas con discapacidad - ¡GRATUITA!',
+            icon: FaWheelchair,
+            color: 'orange',
+            includes: [
+                { icon: FaCheck, text: 'Solo participación' },
+                { icon: FaWheelchair, text: 'Asistencia especializada' }
+            ]
+        }
+    };
+
+    const MAX_INSCRIPCIONES = 5; // Aumentado para permitir más inscripciones
 
     // Verificar autenticación
     useEffect(() => {
@@ -54,13 +101,18 @@ const Evento = () => {
 
         // Check if trying to exceed maximum inscripciones
         if (increment > 0 && newCount > MAX_INSCRIPCIONES) {
-            toast.warning(`No puedes inscribir más de ${MAX_INSCRIPCIONES} personas por distancia`);
+            toast.warning(`No puedes inscribir más de ${MAX_INSCRIPCIONES} personas por categoría`);
+            return;
+        }
+
+        // Permitir valores de 0 o mayores
+        if (newCount < 0) {
             return;
         }
 
         setInscripciones(prev => ({
             ...prev,
-            [distancia]: Math.max(0, newCount)
+            [distancia]: newCount
         }));
 
         // Reset any saved data when inscripciones change
@@ -69,25 +121,61 @@ const Evento = () => {
         }
     };
 
-    const totalAmount = (inscripciones['5k'] * PRICES['5k']) + (inscripciones['10k'] * PRICES['10k']);
-    const totalPersonas = inscripciones['5k'] + inscripciones['10k'];
+    const totalAmount = Object.keys(inscripciones).reduce((total, key) => {
+        return total + (inscripciones[key] * PRICES[key]);
+    }, 0);
+
+    const totalPersonas = Object.values(inscripciones).reduce((total, count) => total + count, 0);
 
     const handleContinuar = () => {
-        if (inscripciones['5k'] === 0 && inscripciones['10k'] === 0) {
+        if (totalPersonas === 0) {
             toast.warning("Debes seleccionar al menos una inscripción.");
             return;
         }
 
         // Guardar las inscripciones seleccionadas en localStorage para pasarlas al formulario
         localStorage.setItem('inscripciones-seleccionadas', JSON.stringify({
-            '5k': inscripciones['5k'],
-            '10k': inscripciones['10k'],
+            ...inscripciones,
             precios: PRICES,
             total: totalAmount
         }));
 
         // Navegar al formulario de datos
         navigate('/registrar_compra');
+    };
+
+    const getColorClasses = (color) => {
+        const colorMap = {
+            blue: {
+                border: 'border-blue-500',
+                bg: 'bg-blue-100',
+                text: 'text-blue-600',
+                price: 'text-blue-600',
+                hover: 'hover:text-blue-600'
+            },
+            purple: {
+                border: 'border-purple-500',
+                bg: 'bg-purple-100',
+                text: 'text-purple-600',
+                price: 'text-purple-600',
+                hover: 'hover:text-purple-600'
+            },
+            green: {
+                border: 'border-green-500',
+                bg: 'bg-green-100',
+                text: 'text-green-600',
+                price: 'text-green-600',
+                hover: 'hover:text-green-600'
+            },
+            orange: {
+                border: 'border-orange-500',
+                bg: 'bg-orange-100',
+                text: 'text-orange-600',
+                price: 'text-orange-600',
+                hover: 'hover:text-orange-600'
+            }
+        };
+        return colorMap[color] || colorMap.blue;
     };
 
     if (loading) {
@@ -117,10 +205,76 @@ const Evento = () => {
             <button
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 sm:py-4 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg touch-manipulation"
                 onClick={handleContinuar}
-                disabled={totalAmount === 0}
+                disabled={totalPersonas === 0}
             >
                 Continuar con la inscripción
             </button>
+        );
+    };
+
+    const renderCategoryCard = (categoryKey) => {
+        const category = CATEGORIES_INFO[categoryKey];
+        const colors = getColorClasses(category.color);
+        const IconComponent = category.icon;
+        const isGratuita = PRICES[categoryKey] === 0;
+
+        return (
+            <div key={categoryKey} className="bg-white rounded-xl lg:rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div className={`border-l-4 ${colors.border} px-4 sm:px-6 lg:px-8 py-4 sm:py-6`}>
+                    <div className="flex flex-col gap-4 sm:gap-6">
+                        <div className="flex items-start gap-3 sm:gap-6">
+                            <div className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 ${colors.bg} rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0`}>
+                                <IconComponent className={`w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 ${colors.text}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                                    <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">{category.name}</h3>
+                                    <span className={`text-xs font-medium ${colors.text} ${colors.bg} px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto`}>
+                                        {isGratuita ? '¡GRATUITA!' : 'Disponible'}
+                                    </span>
+                                </div>
+                                <p className="text-gray-600 text-sm mb-2">{category.description}</p>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
+                                    {category.includes.map((item, index) => (
+                                        <span key={index} className="flex items-center gap-1">
+                                            <item.icon className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            {item.text}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            {isGratuita ? (
+                                <div className="flex flex-col">
+                                    <p className={`text-2xl sm:text-3xl font-black ${colors.price}`}>GRATUITA</p>
+                                </div>
+                            ) : (
+                                <p className={`text-2xl sm:text-3xl font-black ${colors.price}`}>${PRICES[categoryKey].toLocaleString()}</p>
+                            )}
+                            <div className="flex items-center bg-gray-100 rounded-lg sm:rounded-xl">
+                                <button
+                                    onClick={() => handleInscripcionChange(categoryKey, -1)}
+                                    className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-gray-600 ${colors.hover} transition-colors text-lg sm:text-xl font-bold touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    disabled={inscripciones[categoryKey] === 0}
+                                >
+                                    −
+                                </button>
+                                <span className="w-10 sm:w-12 text-center font-bold text-gray-900 text-base sm:text-lg">
+                                    {inscripciones[categoryKey]}
+                                </span>
+                                <button
+                                    onClick={() => handleInscripcionChange(categoryKey, 1)}
+                                    className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-gray-600 ${colors.hover} transition-colors text-lg sm:text-xl font-bold touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    disabled={inscripciones[categoryKey] >= MAX_INSCRIPCIONES}
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         );
     };
 
@@ -144,7 +298,7 @@ const Evento = () => {
                                 ¡Inscribite al 10K del Maestro!
                             </h1>
                             <p className="text-sm sm:text-lg md:text-xl text-blue-100 max-w-2xl">
-                                Elegí tu distancia, completá el pago y preparate para vivir una experiencia única corriendo por la educación.
+                                Elegí tu categoría, completá el pago y preparate para vivir una experiencia única corriendo por la educación.
                             </p>
                         </div>
                     </div>
@@ -154,106 +308,19 @@ const Evento = () => {
             <div className="max-w-6xl mx-auto px-4">
                 <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6 lg:gap-8">
                     <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-                        {/* 5K Recreativa */}
-                        <div className="bg-white rounded-xl lg:rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                            <div className="border-l-4 border-blue-500 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-                                <div className="flex flex-col gap-4 sm:gap-6">
-                                    <div className="flex items-start gap-3 sm:gap-6">
-                                        <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-blue-100 rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0">
-                                            <FaRunning className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-blue-600" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                                                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">5K Categoría</h3>
-                                                <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto">
-                                                    Disponible
-                                                </span>
-                                            </div>
-                                            <p className="text-gray-600 text-sm mb-2">Perfecta para principiantes y familias</p>
-                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
-                                                <span className="flex items-center gap-1">
-                                                    <FaTshirt className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                    Remera técnica
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <FaMedal className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                    Medalla finisher
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-2xl sm:text-3xl font-black text-blue-600">${PRICES['5k'].toLocaleString()}</p>
-                                        <div className="flex items-center bg-gray-100 rounded-lg sm:rounded-xl">
-                                            <button
-                                                onClick={() => handleInscripcionChange('5k', -1)}
-                                                className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-gray-600 hover:text-blue-600 transition-colors text-lg sm:text-xl font-bold touch-manipulation"
-                                            >
-                                                −
-                                            </button>
-                                            <span className="w-10 sm:w-12 text-center font-bold text-gray-900 text-base sm:text-lg">
-                                                {inscripciones['5k']}
-                                            </span>
-                                            <button
-                                                onClick={() => handleInscripcionChange('5k', 1)}
-                                                className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-gray-600 hover:text-blue-600 transition-colors text-lg sm:text-xl font-bold touch-manipulation"
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 10K Competitiva */}
-                        <div className="bg-white rounded-xl lg:rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                            <div className="border-l-4 border-purple-500 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-                                <div className="flex flex-col gap-4 sm:gap-6">
-                                    <div className="flex items-start gap-3 sm:gap-6">
-                                        <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-purple-100 rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0">
-                                            <HiOutlineTrophy className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-purple-600" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                                                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">10K Categoría</h3>
-                                                <span className="text-xs font-medium text-purple-600 bg-purple-100 px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto">
-                                                    Disponible
-                                                </span>
-                                            </div>
-                                            <p className="text-gray-600 text-sm mb-2">Con cronometraje oficial y premiación</p>
-                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
-                                                <span className="flex items-center gap-1">
-                                                    <FaTshirt className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                    Remera técnica
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <FaMedal className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                    Medalla + Premio
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-2xl sm:text-3xl font-black text-purple-600">${PRICES['10k'].toLocaleString()}</p>
-                                        <div className="flex items-center bg-gray-100 rounded-lg sm:rounded-xl">
-                                            <button
-                                                onClick={() => handleInscripcionChange('10k', -1)}
-                                                className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-gray-600 hover:text-purple-600 transition-colors text-lg sm:text-xl font-bold touch-manipulation"
-                                            >
-                                                −
-                                            </button>
-                                            <span className="w-10 sm:w-12 text-center font-bold text-gray-900 text-base sm:text-lg">
-                                                {inscripciones['10k']}
-                                            </span>
-                                            <button
-                                                onClick={() => handleInscripcionChange('10k', 1)}
-                                                className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-gray-600 hover:text-purple-600 transition-colors text-lg sm:text-xl font-bold touch-manipulation"
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
+                        {/* Renderizar todas las categorías */}
+                        {Object.keys(CATEGORIES_INFO).map(categoryKey => renderCategoryCard(categoryKey))}
+                        
+                        {/* Nota informativa sobre categorías gratuitas */}
+                                                                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 sm:p-6 border border-green-200">
+                            <div className="flex items-start gap-3">
+                                <FaCheck className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+                                <div>
+                                    <h3 className="font-bold text-green-800 mb-2">Categorías Gratuitas</h3>
+                                    <p className="text-green-700 text-sm">
+                                        Las categorías <strong>Kids</strong> e <strong>Inclusiva</strong> son completamente gratuitas 
+                                        e incluyen solo la participación en el evento. No incluyen remera técnica ni kit del corredor.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -278,7 +345,7 @@ const Evento = () => {
                                     </div>
                                     <div>
                                         <p className="font-bold text-white text-sm sm:text-base">Horarios</p>
-                                        <p className="text-xs sm:text-sm text-gray-300">10K: 07:30hs • 5K: 08:00hs</p>
+                                        <p className="text-xs sm:text-sm text-gray-300">10K: 07:30hs • 5K: 08:00hs • Kids: 08:30hs</p>
                                     </div>
                                 </div>
                             </div>
@@ -290,18 +357,24 @@ const Evento = () => {
                                             <HiOutlineTicket className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                                             <span>Resumen de inscripción</span>
                                         </h4>
-                                        {inscripciones['5k'] > 0 && (
-                                            <div className="flex justify-between text-xs sm:text-sm mb-2 sm:mb-3">
-                                                <span className="text-gray-300">5K Categoría  × {inscripciones['5k']}</span>
-                                                <span className="font-semibold">${(inscripciones['5k'] * PRICES['5k']).toLocaleString()}</span>
-                                            </div>
-                                        )}
-                                        {inscripciones['10k'] > 0 && (
-                                            <div className="flex justify-between text-xs sm:text-sm mb-2 sm:mb-3">
-                                                <span className="text-gray-300">10K Categoría × {inscripciones['10k']}</span>
-                                                <span className="font-semibold">${(inscripciones['10k'] * PRICES['10k']).toLocaleString()}</span>
-                                            </div>
-                                        )}
+                                        {Object.keys(inscripciones).map(key => {
+                                            if (inscripciones[key] > 0) {
+                                                const category = CATEGORIES_INFO[key];
+                                                const isGratuita = PRICES[key] === 0;
+                                                return (
+                                                    <div key={key} className="flex justify-between text-xs sm:text-sm mb-2 sm:mb-3">
+                                                        <span className="text-gray-300">
+                                                            {category.name} × {inscripciones[key]}
+                                                            {isGratuita && <span className="text-green-400 ml-1">(GRATUITA)</span>}
+                                                        </span>
+                                                        <span className="font-semibold">
+                                                            {isGratuita ? 'GRATIS' : `$${(inscripciones[key] * PRICES[key]).toLocaleString()}`}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })}
                                         
                                         <div className="border-t border-gray-600 pt-3 sm:pt-4 mt-3 sm:mt-4">
                                             <div className="flex justify-between items-center mb-2">
@@ -312,7 +385,9 @@ const Evento = () => {
                                             </div>
                                             <div className="flex justify-between font-bold text-lg sm:text-xl">
                                                 <span>Total a pagar</span>
-                                                <span className="text-blue-400">${totalAmount.toLocaleString()}</span>
+                                                <span className="text-blue-400">
+                                                    {totalAmount === 0 ? 'GRATIS' : `${totalAmount.toLocaleString()}`}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -338,7 +413,9 @@ const Evento = () => {
                     <div className="flex items-center justify-between mb-3">
                         <div>
                             <p className="text-sm text-gray-600">{totalPersonas} persona{totalPersonas > 1 ? 's' : ''}</p>
-                            <p className="text-lg font-bold text-gray-900">${totalAmount.toLocaleString()}</p>
+                            <p className="text-lg font-bold text-gray-900">
+                                {totalAmount === 0 ? 'GRATIS' : `${totalAmount.toLocaleString()}`}
+                            </p>
                         </div>
                         <button
                             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-colors touch-manipulation"
