@@ -26,8 +26,8 @@ const Evento = () => {
     });
 
     const PRICES = {
-        '5k': 8000,
-        '10k': 12000
+        '5k': 1,
+        '10k': 2
     };
 
     const MAX_INSCRIPCIONES = 3;

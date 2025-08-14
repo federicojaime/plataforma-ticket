@@ -25,7 +25,7 @@ const RegistroExitoso = () => {
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/90 via-cyan-800/50 to-amber-700/20 backdrop-blur-sm"></div>
                 </div>
 
-                {/* Contenido */}
+                 {/* Contenido */}
                 <div className="relative z-10 w-full h-full py-8 px-4 md:py-12">
                     <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8">
                         {/* Sección Izquierda */}
