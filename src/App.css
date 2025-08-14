@@ -1,0 +1,25 @@
+h2,
+h3,
+h4 {
+    font-family: poppins, sans-serif;
+    font-weight: 700;
+}
+
+body {
+    background: linear-gradient(to bottom right, #00263b, #4baccc);
+    /* Ajusta las propiedades según tus necesidades */
+    /* Para asegurar que ocupe todo el alto de la ventana */
+    margin: 0;
+    /* Para eliminar el margen por defecto del body */
+}
+
+.login {
+    background-image: url(./assets/img/rueda.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+hr {
+    color: #0b3a50;
+}

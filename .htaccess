@@ -1,0 +1,59 @@
+# Enable rewriting
+RewriteEngine On
+
+# Set the base directory - adjust if your site is in a subdirectory
+RewriteBase /
+
+# Allow direct access to actual files and directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Handle API requests differently if needed
+RewriteCond %{REQUEST_URI} !^/api/
+
+# Send all other requests to index.html
+RewriteRule ^(.*)$ index.html [L,QSA]
+
+# Prevent directory listing
+Options -Indexes 
+
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Enable CORS
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept"
+
+# Security headers
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set X-XSS-Protection "1; mode=block"
+Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Cache control for static assets
+<FilesMatch "\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$">
+    Header set Cache-Control "max-age=31536000, public"
+</FilesMatch>
+
+# Cache control for HTML and data files
+<FilesMatch "\.(html|htm|json)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+</FilesMatch>
+
+# Prevent access to sensitive files
+<FilesMatch "^(\.env|package\.json|package-lock\.json|composer\.json|composer\.lock|\.gitignore|README\.md)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Custom error pages
+ErrorDocument 404 /index.html
+ErrorDocument 500 /index.html
+
+# Compress text files
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/x-javascript application/json
+</IfModule>
