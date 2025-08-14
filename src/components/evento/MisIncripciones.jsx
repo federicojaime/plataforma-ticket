@@ -26,7 +26,13 @@ const MisInscripciones = () => {
             });
             const data = await response.json();
             if (data.ok) {
-                setInscripciones(data.data || []);
+                // FILTRAR SOLO APPROVED Y PENDING EN EL FRONTEND
+                const inscripcionesFiltradas = (data.data || []).filter(inscripcion => 
+                    inscripcion.status === 'confirmed' || 
+                    inscripcion.status === 'approved' || 
+                    inscripcion.status === 'pending'
+                );
+                setInscripciones(inscripcionesFiltradas);
             } else {
                 setError(data.msg);
             }
@@ -35,6 +41,42 @@ const MisInscripciones = () => {
             setError('Error al cargar las inscripciones');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // FUNCIÓN PARA CONVERTIR ESTADOS A ESPAÑOL
+    const getEstadoTexto = (estado) => {
+        switch (estado?.toLowerCase()) {
+            case 'confirmed':
+            case 'approved':
+                return 'Aprobado';
+            case 'pending':
+                return 'Pendiente';
+            case 'cancelled':
+            case 'canceled':
+                return 'Cancelado';
+            case 'rejected':
+                return 'Rechazado';
+            default:
+                return estado || 'Desconocido';
+        }
+    };
+
+    // FUNCIÓN PARA COLORES DE ESTADOS
+    const getEstadoColor = (estado) => {
+        switch (estado?.toLowerCase()) {
+            case 'confirmed':
+            case 'approved':
+                return 'bg-green-100 text-green-800';
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'cancelled':
+            case 'canceled':
+                return 'bg-red-100 text-red-800';
+            case 'rejected':
+                return 'bg-red-100 text-red-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
         }
     };
 
@@ -112,25 +154,9 @@ const MisInscripciones = () => {
         return distancia === '10k' ? FaMedal : FaRunning;
     };
 
-    const getDistanciaColor = (distancia) => {
-        return distancia === '10k' ? 'text-purple-600' : 'text-blue-600';
-    };
-
-    const getEstadoColor = (estado) => {
-        switch (estado?.toLowerCase()) {
-            case 'pagado':
-            case 'confirmed':
-            case 'activo':
-                return 'bg-green-100 text-green-800';
-            case 'pendiente':
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'cancelado':
-            case 'cancelled':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
+    // FUNCIÓN PARA VERIFICAR SI PUEDE DESCARGAR (SOLO APROBADOS)
+    const puedeDescargar = (estado) => {
+        return estado === 'confirmed' || estado === 'approved';
     };
 
     if (loading) {
@@ -192,10 +218,9 @@ const MisInscripciones = () => {
                                         <p className="text-lg font-bold text-blue-600">
                                             {formatAmount(inscripcion.total_amount)}
                                         </p>
+                                        {/* USAR LAS FUNCIONES DE TRADUCCIÓN */}
                                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(inscripcion.status)}`}>
-                                            {inscripcion.status === 'confirmed' ? 'Confirmado' : 
-                                             inscripcion.status === 'pending' ? 'Pendiente' : 
-                                             inscripcion.status}
+                                            {getEstadoTexto(inscripcion.status)}
                                         </span>
                                     </div>
                                 </div>
@@ -264,8 +289,8 @@ const MisInscripciones = () => {
                                                     )}
                                                 </div>
 
-                                                {/* Botón de imprimir */}
-                                                {participante.qr_code && inscripcion.status === 'confirmed' && (
+                                                {/* Botón de imprimir - SOLO PARA APROBADOS */}
+                                                {participante.qr_code && puedeDescargar(inscripcion.status) && (
                                                     <div className="mt-4">
                                                         <button
                                                             onClick={() => handleReprintWithDebounce(participante.qr_code)}
@@ -275,6 +300,16 @@ const MisInscripciones = () => {
                                                             <HiOutlinePrinter />
                                                             {isPrinting ? 'Generando...' : 'Descargar Entrada'}
                                                         </button>
+                                                    </div>
+                                                )}
+
+                                                {/* Mensaje para pendientes */}
+                                                {inscripcion.status === 'pending' && (
+                                                    <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                                                        <div className="flex items-center text-yellow-800 text-sm">
+                                                            <HiOutlineInformationCircle className="w-4 h-4 mr-2" />
+                                                            <span>La entrada estará disponible una vez confirmado el pago</span>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
