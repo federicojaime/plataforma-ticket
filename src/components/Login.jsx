@@ -1,3 +1,4 @@
+// src/components/Login.jsx - Versión Optimizada para Móvil
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Alert, Button, Card, Spinner, TextInput, Label } from 'flowbite-react';
@@ -5,10 +6,11 @@ import {
     HiOutlineInformationCircle,
     HiOutlineMail,
     HiOutlineLockClosed,
-    HiOutlineExclamation,
+    HiOutlineUser,
     HiOutlineLocationMarker,
     HiOutlineCalendar,
     HiOutlineTicket,
+    HiOutlineExclamation,
 } from 'react-icons/hi';
 import { FaTrophy } from 'react-icons/fa';
 
@@ -225,14 +227,15 @@ const Login = () => {
                             <img
                                 src={Logo10K}
                                 alt="Logo 10K del Maestro"
-                                className="h-32 md:h-40 lg:h-48 xl:h-52 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform duration-300 filter brightness-110"
-                            />                        </div>
-                        <div className="mx-auto w-24 h-24 flex items-center justify-center rounded-2xl bg-orange-100">
-                            <HiOutlineExclamation className="w-12 h-12 text-orange-600" />
+                                className="h-20 sm:h-24 md:h-32 lg:h-40 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform duration-300 filter brightness-110"
+                            />                        
+                        </div>
+                        <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center rounded-2xl bg-orange-100">
+                            <HiOutlineExclamation className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-orange-600" />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-bold text-gray-800 mb-4">{MAINTENANCE_CONFIG.title}</h2>
-                            <p className="text-lg text-gray-600 mb-2">{MAINTENANCE_CONFIG.message}</p>
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-4">{MAINTENANCE_CONFIG.title}</h2>
+                            <p className="text-base sm:text-lg text-gray-600 mb-2">{MAINTENANCE_CONFIG.message}</p>
                             <p className="text-sm text-gray-500">
                                 Est. {MAINTENANCE_CONFIG.estimatedTime} — {MAINTENANCE_CONFIG.contactEmail}
                             </p>
@@ -246,9 +249,9 @@ const Login = () => {
     return (
         <main className="flex-1">
             <div className="min-h-screen w-full relative bg-slate-950 selection:bg-indigo-500/30 selection:text-white flex flex-col">
-                {/* Fondo: imagen + gradiente */}
+                {/* Fondo: imagen + gradiente - Optimizado para móvil */}
                 <div className="absolute inset-0 z-0">
-                    <img src={RunnerBanner} alt="Running Background" className="w-full h-full object-cover" loading="eager" decoding="async" />
+                    <img src={RunnerBanner} alt="Running Background" className="w-full h-full object-cover object-center" loading="eager" decoding="async" />
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-blue-900/70 to-indigo-700/40" />
                     <div className="absolute inset-0 backdrop-blur-[1px]" />
                 </div>
@@ -257,31 +260,26 @@ const Login = () => {
                     <MaintenanceScreen />
                 ) : (
                     <div className="relative z-10 flex-1 flex flex-col">
-                        {/* Contenido principal */}
-                        <div className="flex-1 flex items-center justify-center px-4 py-8">
+                        {/* Contenido principal - Stack vertical en móvil */}
+                        <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
                             <div className="max-w-7xl w-full mx-auto">
-                                {/* MISMA ALTURA Y CENTRADOS */}
-                                <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
-                                    {/* IZQUIERDA */}
-                                    <section className="text-white h-full">
-                                        {/* Contenedor igual al formulario */}
-                                        <div className="bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-lg rounded-3xl p-6 border border-white/25 shadow-2xl min-h-[620px] h-full flex flex-col">
-                                            {/* Logo grande y centrado */}
-                                            <div className="flex items-center justify-center mb-6">
+                                <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 lg:gap-12 items-stretch">
+                                    {/* IZQUIERDA - Primero en móvil */}
+                                    <section className="text-white h-full order-1 lg:order-1">
+                                        <div className="bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-lg rounded-2xl lg:rounded-3xl p-4 sm:p-6 border border-white/25 shadow-2xl min-h-[400px] lg:min-h-[620px] h-full flex flex-col">
+                                            {/* Logo centrado - Reducido en móvil */}
+                                            <div className="flex items-center justify-center mb-4 sm:mb-6">
                                                 <img
                                                     src={Logo10K}
                                                     alt="Logo 10K del Maestro"
-                                                    className="h-32 md:h-40 lg:h-48 xl:h-52 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform duration-300 filter brightness-110"
+                                                    className="h-20 sm:h-24 md:h-32 lg:h-40 xl:h-52 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform duration-300 filter brightness-110"
                                                 />
-
                                             </div>
 
                                             {/* Info evento */}
-                                            <div className="space-y-5 flex-1 flex flex-col justify-start">
+                                            <div className="space-y-4 sm:space-y-5 flex-1 flex flex-col justify-start">
                                                 {/* Ubicación / Fecha */}
-                                                <div className="text-center space-y-4">
-
-
+                                                <div className="text-center space-y-3 sm:space-y-4">
                                                     <div className="flex items-center justify-center gap-4">
                                                         <div className="h-px bg-gradient-to-r from-transparent via-white/40 to-transparent flex-1"></div>
                                                         <div className="w-2 h-2 bg-white/60 rounded-full"></div>
@@ -289,37 +287,37 @@ const Login = () => {
                                                     </div>
 
                                                     <div className="flex items-center justify-center gap-3">
-                                                        <HiOutlineCalendar className="w-6 h-6 text-blue-300" />
-                                                        <span className="text-lg md:text-xl font-semibold text-blue-100">7 de Septiembre 2025</span>
+                                                        <HiOutlineCalendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-300" />
+                                                        <span className="text-base sm:text-lg md:text-xl font-semibold text-blue-100">7 de Septiembre 2025</span>
                                                     </div>
                                                 </div>
 
                                                 {/* Distancias */}
-                                                <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-2xl p-5 border border-white/15">
-                                                    <h3 className="text-lg font-bold mb-4 text-center">Distancias Disponibles</h3>
-                                                    <div className="flex justify-center items-center gap-8">
+                                                <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-xl lg:rounded-2xl p-4 sm:p-5 border border-white/15">
+                                                    <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-center">Distancias Disponibles</h3>
+                                                    <div className="flex justify-center items-center gap-6 sm:gap-8">
                                                         <div className="text-center group">
-                                                            <div className="text-2xl font-black text-sky-300 drop-shadow-lg group-hover:scale-110 transition-transform">5K</div>
-                                                            <div className="text-sm text-blue-200 font-medium">Recreativa</div>
+                                                            <div className="text-xl sm:text-2xl font-black text-sky-300 drop-shadow-lg group-hover:scale-110 transition-transform">5K</div>
+                                                            <div className="text-xs sm:text-sm text-blue-200 font-medium">Recreativa</div>
                                                         </div>
-                                                        <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/30 to-transparent"></div>
+                                                        <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-white/30 to-transparent"></div>
                                                         <div className="text-center group">
-                                                            <div className="text-3xl font-black text-yellow-300 drop-shadow-lg group-hover:scale-110 transition-transform">10K</div>
-                                                            <div className="text-sm text-blue-200 font-medium">Competitiva</div>
+                                                            <div className="text-2xl sm:text-3xl font-black text-yellow-300 drop-shadow-lg group-hover:scale-110 transition-transform">10K</div>
+                                                            <div className="text-xs sm:text-sm text-blue-200 font-medium">Competitiva</div>
                                                         </div>
                                                     </div>
                                                     <p className="text-center text-xs text-blue-200/80 mt-3">Incluye remera técnica, chip de cronometraje y kit del atleta</p>
                                                 </div>
                                             </div>
 
-                                            {/* Features */}
-                                            <div className="grid grid-cols-3 gap-3 mt-6">
+                                            {/* Features - Ajustado para móvil */}
+                                            <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-4 sm:mt-6">
                                                 {features.map((f, i) => (
                                                     <div
                                                         key={i}
-                                                        className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-xl p-3 border border-white/15 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group text-center"
+                                                        className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-lg lg:rounded-xl p-2 sm:p-3 border border-white/15 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group text-center"
                                                     >
-                                                        <f.icon className={`w-5 h-5 ${f.color} mb-2 drop-shadow group-hover:scale-110 transition-transform mx-auto`} />
+                                                        <f.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${f.color} mb-1 sm:mb-2 drop-shadow group-hover:scale-110 transition-transform mx-auto`} />
                                                         <p className="text-xs font-semibold text-white leading-tight">{f.text}</p>
                                                     </div>
                                                 ))}
@@ -327,25 +325,25 @@ const Login = () => {
                                         </div>
                                     </section>
 
-                                    {/* DERECHA */}
-                                    <aside className="w-full h-full">
-                                        <Card className="backdrop-blur-2xl bg-white/95 shadow-[0_20px_70px_rgba(0,0,0,0.3)] border border-white/60 w-full rounded-3xl min-h-[620px] h-full flex">
-                                            <div className="p-6 flex flex-col justify-between w-full">
-                                                <div className="space-y-5">
-                                                    <h2 className="text-2xl md:text-3xl font-black text-center bg-gradient-to-r from-indigo-600 via-sky-600 to-purple-600 bg-clip-text text-transparent">
+                                    {/* DERECHA - Card de login */}
+                                    <aside className="w-full h-full order-2 lg:order-2">
+                                        <Card className="backdrop-blur-2xl bg-white/95 shadow-[0_20px_70px_rgba(0,0,0,0.3)] border border-white/60 w-full rounded-2xl lg:rounded-3xl min-h-[500px] lg:min-h-[620px] h-full flex">
+                                            <div className="p-4 sm:p-6 flex flex-col justify-between w-full">
+                                                <div className="space-y-4 sm:space-y-5">
+                                                    <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-center bg-gradient-to-r from-indigo-600 via-sky-600 to-purple-600 bg-clip-text text-transparent">
                                                         ¡Sumate a la carrera!
                                                     </h2>
 
                                                     {error && (
-                                                        <Alert color="failure" icon={HiOutlineInformationCircle}>
+                                                        <Alert color="failure" icon={HiOutlineInformationCircle} className="text-sm">
                                                             {error}
                                                         </Alert>
                                                     )}
 
-                                                    <form className="space-y-4" onSubmit={handleSubmit}>
+                                                    <form className="space-y-3 sm:space-y-4" onSubmit={handleSubmit}>
                                                         <div>
                                                             <div className="mb-2 block">
-                                                                <Label htmlFor="email" value="Correo Electrónico" />
+                                                                <Label htmlFor="email" value="Correo Electrónico" className="text-sm" />
                                                             </div>
                                                             <TextInput
                                                                 id="email"
@@ -356,12 +354,13 @@ const Login = () => {
                                                                 placeholder="tu@email.com"
                                                                 required
                                                                 className="focus:ring-2 focus:ring-sky-400"
+                                                                sizing="md"
                                                             />
                                                         </div>
 
                                                         <div>
                                                             <div className="mb-2 block">
-                                                                <Label htmlFor="password" value="Contraseña" />
+                                                                <Label htmlFor="password" value="Contraseña" className="text-sm" />
                                                             </div>
                                                             <TextInput
                                                                 id="password"
@@ -372,6 +371,7 @@ const Login = () => {
                                                                 placeholder="••••••••"
                                                                 required
                                                                 className="focus:ring-2 focus:ring-sky-400"
+                                                                sizing="md"
                                                             />
                                                         </div>
 
@@ -379,6 +379,7 @@ const Login = () => {
                                                             type="submit"
                                                             className="w-full bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-sky-300"
                                                             disabled={isLoading}
+                                                            size="lg"
                                                         >
                                                             {isLoading ? (
                                                                 <>
@@ -405,28 +406,29 @@ const Login = () => {
                                                         className="w-full hover:bg-white/80 transition-colors border-2 border-gray-200 hover:border-gray-300"
                                                         onClick={handleGoogleLogin}
                                                         disabled={isLoading}
+                                                        size="lg"
                                                     >
                                                         {isLoading ? (
                                                             <>
                                                                 <Spinner size="sm" />
-                                                                <span className="ml-2">Iniciando sesión con Google...</span>
+                                                                <span className="ml-2 text-sm">Iniciando sesión con Google...</span>
                                                             </>
                                                         ) : (
                                                             <>
                                                                 <img
-                                                                    className="h-5 w-5 mr-3"
+                                                                    className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3"
                                                                     src="https://www.svgrepo.com/show/475656/google-color.svg"
                                                                     alt="Google Logo"
                                                                     loading="lazy"
                                                                     decoding="async"
                                                                 />
-                                                                Continuar con Google
+                                                                <span className="text-sm sm:text-base">Continuar con Google</span>
                                                             </>
                                                         )}
                                                     </Button>
                                                 </div>
 
-                                                <p className="text-center text-sm text-gray-600 mt-6">
+                                                <p className="text-center text-xs sm:text-sm text-gray-600 mt-4 sm:mt-6">
                                                     ¿No tenés cuenta?{' '}
                                                     <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
                                                         Registrate aquí
