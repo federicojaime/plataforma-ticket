@@ -1,37 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from "../../context/AuthContext";
-import { HiOutlineTicket, HiOutlineInformationCircle, HiOutlinePrinter, HiOutlineCalendar, HiOutlineQrcode } from "react-icons/hi";
+import { HiOutlineTicket, HiOutlineInformationCircle, HiOutlinePrinter, HiOutlineCalendar, HiOutlineQrcode, HiOutlineUser, HiOutlinePhone } from "react-icons/hi";
+import { FaRunning, FaMedal, FaTshirt, FaIdCard } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
-const MisTickets = () => {
+const MisInscripciones = () => {
     const [loading, setLoading] = useState(true);
-    const [tickets, setTickets] = useState([]);
+    const [inscripciones, setInscripciones] = useState([]);
     const [error, setError] = useState(null);
     const [isPrinting, setIsPrinting] = useState(false);
     const { user } = useAuth();
 
     useEffect(() => {
-        fetchTickets();
+        fetchInscripciones();
     }, [user]);
 
-    const fetchTickets = async () => {
+    const fetchInscripciones = async () => {
         try {
             setLoading(true);
             const apiUrl = import.meta.env.VITE_API_URL;
-            const response = await fetch(`${apiUrl}/evento/mis-tickets`, {
+            const response = await fetch(`${apiUrl}/carrera/mis-inscripciones`, {
                 headers: {
                     'Authorization': user.jwt
                 }
             });
             const data = await response.json();
             if (data.ok) {
-                setTickets(data.data || []);
+                setInscripciones(data.data || []);
             } else {
                 setError(data.msg);
             }
         } catch (error) {
             console.error('Error:', error);
-            setError('Error al cargar los tickets');
+            setError('Error al cargar las inscripciones');
         } finally {
             setLoading(false);
         }
@@ -41,10 +42,10 @@ const MisTickets = () => {
         let toastId = null;
         try {
             setIsPrinting(true);
-            toastId = toast.loading('Generando ticket...');
+            toastId = toast.loading('Generando entrada...');
             
             const apiUrl = import.meta.env.VITE_API_URL;
-            const response = await fetch(`${apiUrl}/evento/reimprimir-ticket/${qrCode}`, {
+            const response = await fetch(`${apiUrl}/carrera/reimprimir-entrada/${qrCode}`, {
                 headers: {
                     'Authorization': user.jwt
                 }
@@ -52,27 +53,27 @@ const MisTickets = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.msg || 'Error al generar el ticket');
+                throw new Error(errorData.msg || 'Error al generar la entrada');
             }
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `ticket-${qrCode}.pdf`;
+            a.download = `entrada-${qrCode}.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
 
             toast.dismiss(toastId);
-            toast.success('Ticket generado exitosamente');
+            toast.success('Entrada generada exitosamente');
         } catch (error) {
             console.error('Error:', error);
             if (toastId) {
                 toast.dismiss(toastId);
             }
-            toast.error(error.message || 'Error al generar el ticket');
+            toast.error(error.message || 'Error al generar la entrada');
         } finally {
             setIsPrinting(false);
         }
@@ -107,10 +108,36 @@ const MisTickets = () => {
         }).format(amount);
     };
 
+    const getDistanciaIcon = (distancia) => {
+        return distancia === '10k' ? FaMedal : FaRunning;
+    };
+
+    const getDistanciaColor = (distancia) => {
+        return distancia === '10k' ? 'text-purple-600' : 'text-blue-600';
+    };
+
+    const getEstadoColor = (estado) => {
+        switch (estado?.toLowerCase()) {
+            case 'pagado':
+            case 'confirmed':
+            case 'activo':
+                return 'bg-green-100 text-green-800';
+            case 'pendiente':
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'cancelado':
+            case 'cancelled':
+                return 'bg-red-100 text-red-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    };
+
     if (loading) {
         return (
             <div className="p-6 bg-white rounded-lg shadow-md">
                 <div className="animate-pulse space-y-6">
+                    <div className="h-6 bg-gray-200 rounded w-1/4"></div>
                     {[1, 2].map((i) => (
                         <div key={i} className="border rounded-lg p-4">
                             <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
@@ -127,67 +154,143 @@ const MisTickets = () => {
         <div className="p-6 bg-white rounded-lg shadow-md">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-800">
-                    <HiOutlineTicket size={24} className="text-blue-600" />
-                    <span>Mis Tickets</span>
+                    <FaRunning size={24} className="text-blue-600" />
+                    <span>Mis Inscripciones</span>
                 </h2>
+                <div className="text-sm text-gray-500">
+                    10K del Maestro - 7 de Septiembre 2025
+                </div>
             </div>
 
             {error && (
-                <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
-                    {error}
+                <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                    <div className="flex items-center">
+                        <HiOutlineInformationCircle className="w-5 h-5 mr-2" />
+                        {error}
+                    </div>
                 </div>
             )}
 
-            {tickets.length > 0 ? (
+            {inscripciones.length > 0 ? (
                 <div className="space-y-6">
-                    {tickets.map((order) => (
-                        <div key={order.order_id} className="border border-gray-200 rounded-lg overflow-hidden">
-                            <div className="bg-gray-50 p-4 border-b">
+                    {inscripciones.map((inscripcion) => (
+                        <div key={inscripcion.id} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            {/* Header de la inscripción */}
+                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 border-b">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h3 className="font-semibold text-gray-900">
-                                            Orden #{order.external_reference?.substr(0, 8)}
+                                        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                            <HiOutlineTicket className="text-blue-600" />
+                                            Inscripción #{inscripcion.external_reference || inscripcion.id}
                                         </h3>
                                         <p className="text-sm text-gray-600 mt-1 flex items-center gap-1">
                                             <HiOutlineCalendar className="text-gray-500" />
-                                            {formatDate(order.created_at)}
+                                            {formatDate(inscripcion.created_at)}
                                         </p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-lg font-bold text-blue-600">
-                                            {formatAmount(order.total_amount)}
+                                            {formatAmount(inscripcion.total_amount)}
                                         </p>
+                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(inscripcion.status)}`}>
+                                            {inscripcion.status === 'confirmed' ? 'Confirmado' : 
+                                             inscripcion.status === 'pending' ? 'Pendiente' : 
+                                             inscripcion.status}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                             
+                            {/* Participantes */}
                             <div className="p-4">
+                                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                    <HiOutlineUser className="text-gray-600" />
+                                    Participantes ({inscripcion.participantes?.length || 0})
+                                </h4>
+                                
                                 <div className="grid gap-4 md:grid-cols-2">
-                                    {order.individual_tickets.map((ticket, index) => (
-                                        <div key={index} className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <span className="flex items-center gap-2 text-gray-700">
-                                                    <HiOutlineTicket className="text-blue-500" />
-                                                    Día {ticket.day}
-                                                </span>
-                                                <span className="px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                                                    {ticket.status}
-                                                </span>
+                                    {inscripcion.participantes?.map((participante, index) => {
+                                        const DistanciaIcon = getDistanciaIcon(participante.distancia);
+                                        return (
+                                            <div key={index} className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow">
+                                                {/* Info del participante */}
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div>
+                                                        <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                                                            <FaIdCard className="text-gray-500 w-4 h-4" />
+                                                            {participante.nombre} {participante.apellido}
+                                                        </h5>
+                                                        <p className="text-sm text-gray-600">DNI: {participante.dni}</p>
+                                                        <p className="text-sm text-gray-600 flex items-center gap-1">
+                                                            <HiOutlinePhone className="w-4 h-4" />
+                                                            {participante.telefono}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${participante.distancia === '10k' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
+                                                            <DistanciaIcon className="w-4 h-4" />
+                                                            {participante.distancia?.toUpperCase()} {participante.distancia === '10k' ? 'Competitiva' : 'Recreativa'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Detalles adicionales */}
+                                                <div className="border-t pt-3 space-y-2">
+                                                    <div className="flex justify-between text-sm">
+                                                        <span className="text-gray-600 flex items-center gap-1">
+                                                            <FaTshirt className="w-4 h-4" />
+                                                            Talle:
+                                                        </span>
+                                                        <span className="font-medium">{participante.talle_remera}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-sm">
+                                                        <span className="text-gray-600">Categoría:</span>
+                                                        <span className="font-medium">{participante.categoria_edad}</span>
+                                                    </div>
+                                                    {participante.team_agrupacion && (
+                                                        <div className="flex justify-between text-sm">
+                                                            <span className="text-gray-600">Team:</span>
+                                                            <span className="font-medium">{participante.team_agrupacion}</span>
+                                                        </div>
+                                                    )}
+                                                    {participante.qr_code && (
+                                                        <div className="flex justify-between items-center text-sm">
+                                                            <span className="text-gray-600 flex items-center gap-1">
+                                                                <HiOutlineQrcode className="w-4 h-4" />
+                                                                QR:
+                                                            </span>
+                                                            <span className="font-mono text-xs">{participante.qr_code}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Botón de imprimir */}
+                                                {participante.qr_code && inscripcion.status === 'confirmed' && (
+                                                    <div className="mt-4">
+                                                        <button
+                                                            onClick={() => handleReprintWithDebounce(participante.qr_code)}
+                                                            disabled={isPrinting}
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            <HiOutlinePrinter />
+                                                            {isPrinting ? 'Generando...' : 'Descargar Entrada'}
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="text-sm text-gray-600 mb-3 flex items-center gap-2">
-                                                <HiOutlineQrcode className="text-gray-500" />
-                                                <span className="font-mono">{ticket.qr_code}</span>
-                                            </div>
-                                            <button
-                                                onClick={() => handleReprintWithDebounce(ticket.qr_code)}
-                                                disabled={isPrinting}
-                                                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                <HiOutlinePrinter />
-                                                {isPrinting ? 'Generando...' : 'Reimprimir Ticket'}
-                                            </button>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Información importante */}
+                                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                    <h5 className="font-medium text-blue-900 mb-2">Información importante:</h5>
+                                    <ul className="text-sm text-blue-800 space-y-1">
+                                        <li>• Fecha: 7 de Septiembre 2025</li>
+                                        <li>• Lugar: San Francisco del Monte de Oro</li>
+                                        <li>• Largada 10K: 07:30hs - 5K: 08:00hs</li>
+                                        <li>• Presentar DNI y entrada el día del evento</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -195,15 +298,24 @@ const MisTickets = () => {
                 </div>
             ) : (
                 <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <HiOutlineInformationCircle className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-lg font-medium text-gray-900">No tienes tickets</h3>
+                    <FaRunning className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="mt-2 text-lg font-medium text-gray-900">No tienes inscripciones</h3>
                     <p className="mt-1 text-gray-500">
-                        Cuando compres tickets para el evento, aparecerán aquí.
+                        Cuando te inscribas al 10K del Maestro, aparecerán aquí.
                     </p>
+                    <div className="mt-6">
+                        <a
+                            href="/"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                        >
+                            <FaRunning className="mr-2 h-4 w-4" />
+                            Inscribirme ahora
+                        </a>
+                    </div>
                 </div>
             )}
         </div>
     );
 };
 
-export default MisTickets;
+export default MisInscripciones;

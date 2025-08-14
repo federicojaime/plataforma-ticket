@@ -1,77 +1,166 @@
 // PendientePago.jsx
 import { Link } from 'react-router-dom';
 import { Card, Button } from 'flowbite-react';
-import { HiOutlineExclamationCircle, HiOutlineSupport } from 'react-icons/hi';
-import Logo from "../../assets/img/logo_blanco.png";
-import EventoBanner from "../../assets/img/festival.jpg";
+import { HiOutlineExclamationCircle, HiOutlineSupport, HiOutlineLocationMarker, HiOutlineCalendar, HiOutlineClock } from 'react-icons/hi';
+import { FaRunning, FaTrophy, FaHourglassHalf } from 'react-icons/fa';
+import Logo10K from "../../assets/img/10k.png";
+import RunnerBanner from "../../assets/img/runner-banner.jpg";
 import Footer from '../Footer';
 
 const PendientePago = () => {
+    const features = [
+        { icon: FaRunning, text: 'Distancias 5K y 10K', color: 'text-blue-400' },
+        { icon: FaTrophy, text: 'Premios y medallas', color: 'text-yellow-400' },
+        { icon: HiOutlineLocationMarker, text: 'San Francisco del Monte de Oro', color: 'text-emerald-400' },
+    ];
+
     return (
         <main className="flex-1">
-            <div className="min-h-[calc(100vh-64px)] w-full relative bg-gray-100">
-                {/* Fondo */}
+            <div className="min-h-screen w-full relative bg-slate-950 selection:bg-indigo-500/30 selection:text-white flex flex-col">
+                {/* Fondo: imagen + gradiente */}
                 <div className="absolute inset-0 z-0">
-                    <img
-                        src={EventoBanner}
-                        alt="Festival del Artesano Background"
-                        className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-br from-amber-900/90 via-amber-800/50 to-amber-700/20 backdrop-blur-sm"></div>
+                    <img src={RunnerBanner} alt="Running Background" className="w-full h-full object-cover" loading="eager" decoding="async" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-amber-900/70 to-orange-700/40" />
+                    <div className="absolute inset-0 backdrop-blur-[1px]" />
                 </div>
 
-                {/* Contenido */}
-                <div className="relative z-10 w-full h-full py-8 px-4 md:py-12">
-                    <div className="max-w-7xl mx-auto flex flex-col items-center justify-center gap-8">
-                        <div className="w-full max-w-2xl">
-                            <img
-                                src={Logo}
-                                alt="Logo"
-                                className="h-16 md:h-24 mb-8 mx-auto"
-                            />
+                <div className="relative z-10 flex-1 flex flex-col">
+                    {/* Contenido principal */}
+                    <div className="flex-1 flex items-center justify-center px-4 py-8">
+                        <div className="max-w-7xl w-full mx-auto">
+                            {/* MISMA ALTURA Y CENTRADOS */}
+                            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
+                                {/* IZQUIERDA */}
+                                <section className="text-white h-full">
+                                    {/* Contenedor igual al formulario */}
+                                    <div className="bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-lg rounded-3xl p-6 border border-white/25 shadow-2xl min-h-[620px] h-full flex flex-col">
+                                        {/* Logo grande y centrado */}
+                                        <div className="flex items-center justify-center mb-6">
+                                            <img
+                                                src={Logo10K}
+                                                alt="Logo 10K del Maestro"
+                                                className="h-32 md:h-40 lg:h-48 xl:h-52 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform duration-300 filter brightness-110"
+                                            />
+                                        </div>
 
-                            <Card className="backdrop-blur-xl bg-white/95 shadow-2xl border-none">
-                                <div className="space-y-6 p-4 md:p-6">
-                                    <div className="flex flex-col items-center space-y-4">
-                                        <HiOutlineExclamationCircle className="w-20 h-20 text-amber-500" />
-                                        <h2 className="text-2xl md:text-3xl font-bold text-amber-700 text-center">
-                                            Pago Pendiente
-                                        </h2>
-                                        <div className="text-center space-y-2">
-                                            <p className="text-gray-700">
-                                                Tu pago para el Festival del Artesano está pendiente. Por favor, espera un momento mientras se procesa.
-                                            </p>
-                                            <p className="text-gray-700">
-                                                Si el pago no se refleja en unos minutos, contactá a nuestro equipo de soporte.
-                                            </p>
+                                        {/* Info evento */}
+                                        <div className="space-y-5 flex-1 flex flex-col justify-start">
+                                            {/* Título de pendiente */}
+                                            <div className="text-center space-y-4">
+                                                <div className="flex items-center justify-center gap-4">
+                                                    <div className="h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent flex-1"></div>
+                                                    <div className="w-2 h-2 bg-amber-400/60 rounded-full"></div>
+                                                    <div className="h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent flex-1"></div>
+                                                </div>
+
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <FaHourglassHalf className="w-8 h-8 text-amber-400" />
+                                                    <span className="text-xl md:text-2xl font-bold text-amber-200">Pago Pendiente</span>
+                                                </div>
+
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <HiOutlineCalendar className="w-6 h-6 text-blue-300" />
+                                                    <span className="text-lg md:text-xl font-semibold text-blue-100">7 de Septiembre 2025</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Info del evento */}
+                                            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-2xl p-5 border border-white/15">
+                                                <h3 className="text-lg font-bold mb-4 text-center">Procesando tu pago</h3>
+                                                <div className="space-y-3">
+                                                    <div className="text-center">
+                                                        <div className="text-lg font-bold text-amber-300">Esperá unos minutos</div>
+                                                        <div className="text-sm text-blue-200 font-medium">Tu lugar está reservado temporalmente</div>
+                                                    </div>
+                                                    <div className="flex justify-center">
+                                                        <div className="animate-pulse flex space-x-1">
+                                                            <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                                                            <div className="w-2 h-2 bg-amber-400 rounded-full animation-delay-200"></div>
+                                                            <div className="w-2 h-2 bg-amber-400 rounded-full animation-delay-400"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p className="text-center text-xs text-blue-200/80 mt-3">Recibirás una confirmación pronto</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Features */}
+                                        <div className="grid grid-cols-3 gap-3 mt-6">
+                                            {features.map((f, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-xl p-3 border border-white/15 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group text-center"
+                                                >
+                                                    <f.icon className={`w-5 h-5 ${f.color} mb-2 drop-shadow group-hover:scale-110 transition-transform mx-auto`} />
+                                                    <p className="text-xs font-semibold text-white leading-tight">{f.text}</p>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
+                                </section>
 
-                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                        <div className="flex items-center text-amber-800">
-                                            <HiOutlineSupport className="w-5 h-5 mr-2" />
-                                            <span className="text-sm">
-                                                Si necesitas ayuda, por favor <a href="https://instagram.com/codeo.ar" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:text-amber-800 underline">dejanos un mensaje</a>.
-                                            </span>
+                                {/* DERECHA */}
+                                <aside className="w-full h-full">
+                                    <Card className="backdrop-blur-2xl bg-white/95 shadow-[0_20px_70px_rgba(0,0,0,0.3)] border border-white/60 w-full rounded-3xl min-h-[620px] h-full flex">
+                                        <div className="p-6 flex flex-col justify-center w-full">
+                                            <div className="space-y-6 text-center">
+                                                <div className="mx-auto w-24 h-24 flex items-center justify-center rounded-2xl bg-amber-100">
+                                                    <HiOutlineClock className="w-12 h-12 text-amber-600" />
+                                                </div>
+                                                
+                                                <div>
+                                                    <h2 className="text-3xl font-black text-center bg-gradient-to-r from-amber-600 via-orange-600 to-yellow-600 bg-clip-text text-transparent mb-4">
+                                                        Pago Pendiente
+                                                    </h2>
+                                                    <p className="text-gray-600 mb-4">
+                                                        Tu pago para el 10K del Maestro está siendo procesado.
+                                                    </p>
+                                                    <p className="text-gray-600 mb-6">
+                                                        Por favor, esperá un momento mientras se confirma la transacción. Si el pago no se refleja en unos minutos, contactá a nuestro equipo de soporte.
+                                                    </p>
+                                                </div>
+
+                                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                                    <div className="flex items-center justify-center text-amber-800 mb-3">
+                                                        <HiOutlineSupport className="w-5 h-5 mr-2" />
+                                                        <span className="text-sm font-medium">
+                                                            ¿Qué hacer mientras esperás?
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-sm text-amber-700 space-y-2">
+                                                        <p>• No cierres esta ventana</p>
+                                                        <p>• Revisá tu email por confirmaciones</p>
+                                                        <p>• Si tardá más de 10 minutos, contactanos</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <Link to="/" className="w-full">
+                                                        <Button
+                                                            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-amber-300"
+                                                        >
+                                                            Volver al Inicio
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+
+                                                <div className="text-center text-sm text-gray-500">
+                                                    Si necesitas ayuda, por favor <a href="https://instagram.com/codeo.ar" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:text-amber-800 underline">dejanos un mensaje en Instagram</a>.
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-
-                                    <div className="pt-4">
-                                        <Link to="/" className="w-full">
-                                            <Button
-                                                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold"
-                                            >
-                                                Volver al Inicio
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </Card>
+                                    </Card>
+                                </aside>
+                            </div>
                         </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="relative z-10">
+                        <Footer />
                     </div>
                 </div>
             </div>
-            <Footer />
         </main>
     );
 };

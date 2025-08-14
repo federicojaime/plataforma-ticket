@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, Checkbox, FileInput, Label, Select, TextInput, Card, Spinner, Radio } from 'flowbite-react';
-import { HiOutlineTicket, HiOutlineUser, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineStar, HiOutlineExclamationCircle } from 'react-icons/hi';
+import { HiOutlineTicket, HiOutlineUser, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineStar, HiOutlineExclamationCircle, HiOutlineTrash, HiOutlineUserRemove } from 'react-icons/hi';
 import { FaTshirt, FaRunning, FaMedal } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -192,6 +192,58 @@ const Registrar_compra = () => {
         return errors;
     };
 
+    const handleEliminarPersona = (indexToDelete) => {
+        if (personas.length <= 1) {
+            toast.warning("Debe haber al menos una persona inscrita.");
+            return;
+        }
+
+        // Mostrar confirmación
+        Swal.fire({
+            title: '¿Eliminar participante?',
+            text: `¿Estás seguro de que querés eliminar a ${personas[indexToDelete].nombre || `Persona ${indexToDelete + 1}`}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const nuevasPersonas = personas.filter((_, index) => index !== indexToDelete);
+                setPersonas(nuevasPersonas);
+
+                // Actualizar inscripciones data
+                const personaEliminada = personas[indexToDelete];
+                const nuevasInscripciones = { ...inscripcionesData };
+
+                if (personaEliminada.distancia === '5k') {
+                    nuevasInscripciones['5k'] = Math.max(0, nuevasInscripciones['5k'] - 1);
+                } else {
+                    nuevasInscripciones['10k'] = Math.max(0, nuevasInscripciones['10k'] - 1);
+                }
+
+                // Recalcular total
+                nuevasInscripciones.total = (nuevasInscripciones['5k'] * nuevasInscripciones.precios['5k']) +
+                    (nuevasInscripciones['10k'] * nuevasInscripciones.precios['10k']);
+
+                setInscripcionesData(nuevasInscripciones);
+
+                // Actualizar localStorage
+                localStorage.setItem('inscripciones-seleccionadas', JSON.stringify(nuevasInscripciones));
+
+                // Ajustar persona actual si es necesario
+                if (personaActual >= nuevasPersonas.length) {
+                    setPersonaActual(Math.max(0, nuevasPersonas.length - 1));
+                } else if (indexToDelete <= personaActual && personaActual > 0) {
+                    setPersonaActual(personaActual - 1);
+                }
+
+                toast.success("Participante eliminado correctamente.");
+            }
+        });
+    };
+
     const handleSiguientePersona = () => {
         const errors = validatePersona(personas[personaActual]);
         if (errors.length > 0) {
@@ -329,10 +381,24 @@ const Registrar_compra = () => {
 
                                 {/* Datos Personales */}
                                 <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                                    <h3 className="text-xl font-bold mb-4 text-blue-900 flex items-center">
-                                        <HiOutlineUser className="mr-2" />
-                                        Datos Personales - {personaActualData.distancia.toUpperCase()}
-                                    </h3>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-xl font-bold text-blue-900 flex items-center">
+                                            <HiOutlineUser className="mr-2" />
+                                            Datos Personales - {personaActualData.distancia.toUpperCase()}
+                                        </h3>
+                                        {personas.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                color="failure"
+                                                size="sm"
+                                                onClick={() => handleEliminarPersona(personaActual)}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <HiOutlineTrash className="w-4 h-4" />
+                                                Eliminar
+                                            </Button>
+                                        )}
+                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <Label htmlFor="dni" value="DNI" />
@@ -716,9 +782,20 @@ const Registrar_compra = () => {
                                             <span className="font-medium">
                                                 {persona.nombre || `Persona ${index + 1}`}
                                             </span>
-                                            <span className="text-xs px-2 py-1 rounded-full bg-gray-600 text-gray-200">
-                                                {persona.distancia.toUpperCase()}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs px-2 py-1 rounded-full bg-gray-600 text-gray-200">
+                                                    {persona.distancia.toUpperCase()}
+                                                </span>
+                                                {personas.length > 1 && (
+                                                    <button
+                                                        onClick={() => handleEliminarPersona(index)}
+                                                        className="text-red-400 hover:text-red-300 p-1 rounded"
+                                                        title="Eliminar participante"
+                                                    >
+                                                        <HiOutlineUserRemove className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         {index === personaActual && (
                                             <p className="text-xs text-blue-300 mt-1">← Completando datos</p>
