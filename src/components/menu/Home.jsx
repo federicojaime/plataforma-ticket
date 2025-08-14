@@ -117,12 +117,10 @@ const Home = () => {
                                         <div className="flex items-center justify-center space-x-4">
                                             <div className="text-center">
                                                 <div className="text-2xl font-black text-sky-600">5K</div>
-                                                <div className="text-xs text-gray-500 uppercase tracking-wide">Recreativa</div>
                                             </div>
                                             <div className="w-px h-8 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
                                             <div className="text-center">
                                                 <div className="text-3xl font-black text-blue-700">10K</div>
-                                                <div className="text-xs text-gray-500 uppercase tracking-wide">Competitiva</div>
                                             </div>
                                         </div>
                                     </div>

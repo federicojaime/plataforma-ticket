@@ -164,7 +164,7 @@ const Evento = () => {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                                                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">5K Recreativa</h3>
+                                                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">5K Categoría</h3>
                                                 <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto">
                                                     Disponible
                                                 </span>
@@ -216,7 +216,7 @@ const Evento = () => {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                                                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">10K Competitiva</h3>
+                                                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">10K Categoría</h3>
                                                 <span className="text-xs font-medium text-purple-600 bg-purple-100 px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto">
                                                     Disponible
                                                 </span>
@@ -292,13 +292,13 @@ const Evento = () => {
                                         </h4>
                                         {inscripciones['5k'] > 0 && (
                                             <div className="flex justify-between text-xs sm:text-sm mb-2 sm:mb-3">
-                                                <span className="text-gray-300">5K Recreativa × {inscripciones['5k']}</span>
+                                                <span className="text-gray-300">5K Categoría  × {inscripciones['5k']}</span>
                                                 <span className="font-semibold">${(inscripciones['5k'] * PRICES['5k']).toLocaleString()}</span>
                                             </div>
                                         )}
                                         {inscripciones['10k'] > 0 && (
                                             <div className="flex justify-between text-xs sm:text-sm mb-2 sm:mb-3">
-                                                <span className="text-gray-300">10K Competitiva × {inscripciones['10k']}</span>
+                                                <span className="text-gray-300">10K Categoría × {inscripciones['10k']}</span>
                                                 <span className="font-semibold">${(inscripciones['10k'] * PRICES['10k']).toLocaleString()}</span>
                                             </div>
                                         )}

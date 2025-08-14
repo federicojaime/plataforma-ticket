@@ -420,7 +420,7 @@ const Registrar_compra = () => {
                         />
                         <h1 className="text-3xl md:text-4xl font-black">Datos de Inscripción</h1>
                         <p className="text-lg">
-                            Persona {personaActual + 1} de {totalPersonas} - {personaActualData.distancia.toUpperCase()} {personaActualData.distancia === '5k' ? 'Recreativa' : 'Competitiva'}
+                            Persona {personaActual + 1} de {totalPersonas} - {personaActualData.distancia.toUpperCase()} {personaActualData.distancia === '5k' ? '' : ''}
                         </p>
                     </div>
                 </div>
@@ -817,7 +817,7 @@ const Registrar_compra = () => {
                                     <div className="flex justify-between items-center p-3 bg-blue-600/20 rounded-lg border border-blue-400/30">
                                         <div className="flex items-center gap-2">
                                             <FaRunning className="text-blue-400" />
-                                            <span>5K Recreativa × {inscripcionesData['5k']}</span>
+                                            <span>5K Categoría × {inscripcionesData['5k']}</span>
                                         </div>
                                         <span className="font-bold">${(inscripcionesData['5k'] * inscripcionesData.precios['5k']).toLocaleString()}</span>
                                     </div>
@@ -827,7 +827,7 @@ const Registrar_compra = () => {
                                     <div className="flex justify-between items-center p-3 bg-purple-600/20 rounded-lg border border-purple-400/30">
                                         <div className="flex items-center gap-2">
                                             <FaMedal className="text-purple-400" />
-                                            <span>10K Competitiva × {inscripcionesData['10k']}</span>
+                                            <span>10K Categoría × {inscripcionesData['10k']}</span>
                                         </div>
                                         <span className="font-bold">${(inscripcionesData['10k'] * inscripcionesData.precios['10k']).toLocaleString()}</span>
                                     </div>

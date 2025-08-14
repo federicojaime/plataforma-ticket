@@ -17,8 +17,8 @@ const EventoInfo = () => {
     const horarios = [
         { hora: "06:00", actividad: "Apertura del evento y acreditaciones" },
         { hora: "07:00", actividad: "Calentamiento grupal" },
-        { hora: "07:30", actividad: "Largada 10K Competitiva" },
-        { hora: "08:00", actividad: "Largada 5K Recreativa" },
+        { hora: "07:30", actividad: "Largada 10K" },
+        { hora: "08:00", actividad: "Largada 5K" },
         { hora: "09:30", actividad: "Premiación y sorteos" },
         { hora: "10:30", actividad: "Cierre del evento" }
     ];
@@ -109,18 +109,16 @@ const EventoInfo = () => {
 
                 {/* Distancias */}
                 <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 mb-12">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Distancias Disponibles</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Categorías</h2>
                     <div className="grid md:grid-cols-2 gap-8">
                         <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-blue-100">
                             <FaRunning className="w-12 h-12 text-blue-600 mx-auto mb-4" />
                             <h3 className="text-4xl font-black text-blue-700 mb-2">5K</h3>
-                            <p className="text-lg font-semibold text-blue-600 mb-2">Recreativa</p>
                             <p className="text-gray-600 text-sm">Perfecta para principiantes y familias</p>
                         </div>
                         <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-100">
                             <FaTrophy className="w-12 h-12 text-purple-600 mx-auto mb-4" />
                             <h3 className="text-4xl font-black text-purple-700 mb-2">10K</h3>
-                            <p className="text-lg font-semibold text-purple-600 mb-2">Competitiva</p>
                             <p className="text-gray-600 text-sm">Con cronometraje oficial y premiación</p>
                         </div>
                     </div>

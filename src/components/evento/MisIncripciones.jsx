@@ -254,7 +254,7 @@ const MisInscripciones = () => {
                                                     <div className="text-right">
                                                         <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${participante.distancia === '10k' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
                                                             <DistanciaIcon className="w-4 h-4" />
-                                                            {participante.distancia?.toUpperCase()} {participante.distancia === '10k' ? 'Competitiva' : 'Recreativa'}
+                                                            {participante.distancia?.toUpperCase()} {participante.distancia === '10k' ? '' : ''}
                                                         </span>
                                                     </div>
                                                 </div>

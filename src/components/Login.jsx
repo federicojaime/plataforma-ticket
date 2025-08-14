@@ -294,16 +294,14 @@ const Login = () => {
 
                                                 {/* Distancias */}
                                                 <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-xl lg:rounded-2xl p-4 sm:p-5 border border-white/15">
-                                                    <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-center">Distancias Disponibles</h3>
+                                                    <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-center">Categorías</h3>
                                                     <div className="flex justify-center items-center gap-6 sm:gap-8">
                                                         <div className="text-center group">
                                                             <div className="text-xl sm:text-2xl font-black text-sky-300 drop-shadow-lg group-hover:scale-110 transition-transform">5K</div>
-                                                            <div className="text-xs sm:text-sm text-blue-200 font-medium">Recreativa</div>
                                                         </div>
                                                         <div className="w-px h-8 sm:h-10 bg-gradient-to-b from-transparent via-white/30 to-transparent"></div>
                                                         <div className="text-center group">
                                                             <div className="text-2xl sm:text-3xl font-black text-yellow-300 drop-shadow-lg group-hover:scale-110 transition-transform">10K</div>
-                                                            <div className="text-xs sm:text-sm text-blue-200 font-medium">Competitiva</div>
                                                         </div>
                                                     </div>
                                                     <p className="text-center text-xs text-blue-200/80 mt-3">Incluye remera técnica, chip de cronometraje y kit del atleta</p>
