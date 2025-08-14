@@ -5,79 +5,53 @@ import {
     HiOutlineInformationCircle,
     HiOutlineMail,
     HiOutlineLockClosed,
-    HiOutlineTicket,
-    HiOutlineUserGroup,
-    HiOutlineMusicNote,
     HiOutlineExclamation,
-    HiOutlineClock
+    HiOutlineLocationMarker,
+    HiOutlineCalendar,
+    HiOutlineTicket,
 } from 'react-icons/hi';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { FaTrophy } from 'react-icons/fa';
+
+import { getAuth, GoogleAuthProvider, signInWithPopup, getRedirectResult } from 'firebase/auth';
 import { app } from '../config/firebase';
-import Logo from "../assets/img/logo_blanco.png";
-import EventoBanner from "../assets/img/festival.jpg";
+import Logo10K from '../assets/img/10k.png';
+import RunnerBanner from '../assets/img/runner-banner.jpg';
 import { useAuth } from '../context/AuthContext';
 import Loading from './ui/Loading';
 import Footer from './Footer';
 
-// Configuración de mantenimiento
-const MAINTENANCE_MODE = false; // Cambiar a false para desactivar el modo mantenimiento
+/* ===== Config ===== */
+const MAINTENANCE_MODE = false;
 const MAINTENANCE_CONFIG = {
-    title: "Sitio en Mantenimiento",
-    message: "Estamos realizando mejoras en nuestro sistema. Volveremos pronto.",
-    estimatedTime: "30 minutos",
-    contactEmail: "soporte@festival.com"
+    title: 'Sitio en Mantenimiento',
+    message: 'Estamos realizando mejoras en nuestro sistema. Volveremos pronto.',
+    estimatedTime: '30 minutos',
+    contactEmail: 'soporte@10kdelmaestro.com',
 };
 
-// Detecta navegadores internos problemáticos
+/* ===== Utils (in-app browsers) ===== */
 const isInAppBrowser = () => {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
     return /FBAN|FBAV|Instagram|Line|Messenger|LinkedIn|Twitter|WhatsApp/i.test(userAgent);
 };
 
-// Función mejorada para obtener la URL del navegador externo
-const getExternalBrowserUrl = (targetUrl) => {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    const isAndroid = /android/i.test(userAgent);
-    const isIOS = /iPad|iPhone|iPod/.test(userAgent);
-
-    if (isAndroid) {
-        return {
-            primary: `intent://${targetUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`,
-            fallback: `googlechrome://navigate?url=${targetUrl}`
-        };
-    } else if (isIOS) {
-        return {
-            primary: `x-web-search://${targetUrl}`,
-            fallback: targetUrl
-        };
-    }
-    return { primary: targetUrl, fallback: targetUrl };
-};
-
-// Función para abrir en navegador externo
 const openInExternalBrowser = () => {
     const currentUrl = window.location.href;
-
     const tryRedirect = () => {
         if (/android/i.test(navigator.userAgent)) {
             window.location.href = `intent://${window.location.host}${window.location.pathname}#Intent;scheme=https;package=com.android.chrome;end`;
-
             setTimeout(() => {
                 window.location.href = `market://details?id=com.android.chrome`;
             }, 2000);
-        }
-        else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        } else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
             window.location.href = currentUrl;
-
             setTimeout(() => {
                 window.location.replace(currentUrl);
             }, 2000);
-        }
-        else {
+        } else {
             window.open(currentUrl, '_system');
         }
     };
-
     alert('Para una mejor experiencia, la aplicación se abrirá en tu navegador predeterminado.');
     tryRedirect();
 };
@@ -85,6 +59,7 @@ const openInExternalBrowser = () => {
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
+/* ===== Component ===== */
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -94,70 +69,54 @@ const Login = () => {
     const { user, login, authLoading } = useAuth();
 
     useEffect(() => {
-        if (isInAppBrowser()) {
-            openInExternalBrowser();
-        }
+        if (isInAppBrowser()) openInExternalBrowser();
     }, []);
-
     useEffect(() => {
-        if (!authLoading && user) {
-            navigate('/', { replace: true });
-        }
+        if (!authLoading && user) navigate('/', { replace: true });
     }, [user, authLoading, navigate]);
 
     useEffect(() => {
         const handleRedirectResult = async () => {
             try {
                 const result = await getRedirectResult(auth);
-                if (result) {
-                    const firebaseUser = result.user;
-                    const idToken = await firebaseUser.getIdToken();
+                if (!result) return;
 
-                    if (!idToken) {
-                        throw new Error('No se pudo obtener el token de Firebase');
-                    }
+                const firebaseUser = result.user;
+                const idToken = await firebaseUser.getIdToken();
+                if (!idToken) throw new Error('No se pudo obtener el token de Firebase');
 
-                    const apiUrl = import.meta.env.VITE_API_URL;
-                    const response = await fetch(`${apiUrl}/user/google-login`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'Authorization': `Bearer ${idToken}`
-                        },
-                        body: JSON.stringify({
-                            email: firebaseUser.email,
-                            firstname: firebaseUser.displayName?.split(' ')[0] || '',
-                            lastname: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
-                            googleId: firebaseUser.uid,
-                            firebaseToken: idToken
-                        })
-                    });
+                const apiUrl = import.meta.env.VITE_API_URL;
+                const response = await fetch(`${apiUrl}/user/google-login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${idToken}`,
+                    },
+                    body: JSON.stringify({
+                        email: firebaseUser.email,
+                        firstname: firebaseUser.displayName?.split(' ')[0] || '',
+                        lastname: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+                        googleId: firebaseUser.uid,
+                        firebaseToken: idToken,
+                    }),
+                });
 
-                    const data = await response.json();
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Error en la respuesta del servidor');
 
-                    if (!response.ok) {
-                        throw new Error(data.message || 'Error en la respuesta del servidor');
-                    }
-
-                    if (data.ok && data.data?.jwt) {
-                        const userData = {
-                            ...data.data,
-                            googleId: firebaseUser.uid,
-                            firebaseToken: idToken
-                        };
-                        login(userData);
-                        navigate('/', { replace: true });
-                    } else {
-                        throw new Error(data.msg || 'Error en la autenticación con Google');
-                    }
+                if (data.ok && data.data?.jwt) {
+                    const userData = { ...data.data, googleId: firebaseUser.uid, firebaseToken: idToken };
+                    login(userData);
+                    navigate('/', { replace: true });
+                } else {
+                    throw new Error(data.msg || 'Error en la autenticación con Google');
                 }
             } catch (error) {
                 console.error('Error en redirección:', error);
                 setError('Error en la autenticación. Por favor, intenta nuevamente.');
             }
         };
-
         handleRedirectResult();
     }, [auth, login, navigate]);
 
@@ -165,7 +124,6 @@ const Login = () => {
         try {
             setError('');
             setIsLoading(true);
-
             if (isInAppBrowser()) {
                 setError('Por favor, usa tu navegador predeterminado para iniciar sesión.');
                 return;
@@ -174,40 +132,30 @@ const Login = () => {
             const result = await signInWithPopup(auth, googleProvider);
             const firebaseUser = result.user;
             const idToken = await firebaseUser.getIdToken();
-
-            if (!idToken) {
-                throw new Error('No se pudo obtener el token de Firebase');
-            }
+            if (!idToken) throw new Error('No se pudo obtener el token de Firebase');
 
             const apiUrl = import.meta.env.VITE_API_URL;
             const response = await fetch(`${apiUrl}/user/google-login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': `Bearer ${idToken}`
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${idToken}`,
                 },
                 body: JSON.stringify({
                     email: firebaseUser.email,
                     firstname: firebaseUser.displayName?.split(' ')[0] || '',
                     lastname: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
                     googleId: firebaseUser.uid,
-                    firebaseToken: idToken
-                })
+                    firebaseToken: idToken,
+                }),
             });
 
             const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Error en la respuesta del servidor');
-            }
+            if (!response.ok) throw new Error(data.message || 'Error en la respuesta del servidor');
 
             if (data.ok && data.data?.jwt) {
-                const userData = {
-                    ...data.data,
-                    googleId: firebaseUser.uid,
-                    firebaseToken: idToken
-                };
+                const userData = { ...data.data, googleId: firebaseUser.uid, firebaseToken: idToken };
                 login(userData);
                 navigate('/', { replace: true });
             } else {
@@ -224,27 +172,17 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (isLoading) return;
-
         setError('');
         setIsLoading(true);
-
         try {
             const apiUrl = import.meta.env.VITE_API_URL;
             const response = await fetch(`${apiUrl}/user/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ email, password })
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ email, password }),
             });
-
             const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Error en el inicio de sesión');
-            }
-
+            if (!response.ok) throw new Error(data.message || 'Error en el inicio de sesión');
             if (data.ok && data.data?.jwt) {
                 login(data.data);
                 navigate('/', { replace: true });
@@ -261,60 +199,43 @@ const Login = () => {
 
     if (authLoading) return <Loading />;
 
+    /* ===== UI ===== */
     const features = [
-        { icon: HiOutlineTicket, text: "Comprá tus entradas", color: "text-cyan-600" },
-        { icon: HiOutlineMusicNote, text: "Shows en vivo", color: "text-amber-500" },
-        { icon: HiOutlineUserGroup, text: "Artesanos locales", color: "text-emerald-500" }
+        { icon: HiOutlineTicket, text: 'Inscripción online', color: 'text-blue-400' },
+        { icon: FaTrophy, text: 'Premios y medallas', color: 'text-yellow-400' },
+        {
+            icon: HiOutlineLocationMarker,
+            text: (
+                <>
+                    San Francisco
+                    <br />
+                    del Monte de Oro
+                </>
+            ),
+            color: 'text-emerald-400'
+        },
     ];
 
-    // Componente de Mantenimiento
     const MaintenanceScreen = () => (
-        <div className="relative z-10 w-full h-full py-8 px-4 md:py-12">
-            <div className="max-w-3xl mx-auto">
+        <div className="relative z-10 w-full h-full flex items-center justify-center px-4">
+            <div className="max-w-2xl mx-auto">
                 <Card className="backdrop-blur-xl bg-white/95 shadow-2xl border-none w-full">
                     <div className="text-center space-y-6">
                         <div className="flex justify-center mb-6">
                             <img
-                                src={Logo}
-                                alt="Logo"
-                                className="h-16 md:h-24"
-                            />
+                                src={Logo10K}
+                                alt="Logo 10K del Maestro"
+                                className="h-32 md:h-40 lg:h-48 xl:h-52 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform duration-300 filter brightness-110"
+                            />                        </div>
+                        <div className="mx-auto w-24 h-24 flex items-center justify-center rounded-2xl bg-orange-100">
+                            <HiOutlineExclamation className="w-12 h-12 text-orange-600" />
                         </div>
-
-                        <div className="mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-amber-100">
-                            <HiOutlineExclamation className="w-12 h-12 text-amber-600" />
-                        </div>
-
                         <div>
-                            <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                                {MAINTENANCE_CONFIG.title}
-                            </h2>
-                            <p className="text-lg text-gray-600 mb-2">
-                                {MAINTENANCE_CONFIG.message}
+                            <h2 className="text-3xl font-bold text-gray-800 mb-4">{MAINTENANCE_CONFIG.title}</h2>
+                            <p className="text-lg text-gray-600 mb-2">{MAINTENANCE_CONFIG.message}</p>
+                            <p className="text-sm text-gray-500">
+                                Est. {MAINTENANCE_CONFIG.estimatedTime} — {MAINTENANCE_CONFIG.contactEmail}
                             </p>
-                            {/* <div className="flex items-center justify-center text-gray-500 space-x-2">
-                                <HiOutlineClock className="w-5 h-5" />
-                                <span>Tiempo estimado: {MAINTENANCE_CONFIG.estimatedTime}</span>
-                            </div>
-                        </div>
-
-                        <div className="pt-4">
-                            <div className="inline-flex items-center justify-center space-x-2 bg-cyan-50 px-4 py-2 rounded-lg">
-                                <HiOutlineMail className="w-5 h-5 text-cyan-600" />
-                                <span className="text-cyan-700">{MAINTENANCE_CONFIG.contactEmail}</span>
-                            </div>*/}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-                            {features.map((feature, index) => (
-                                <div
-                                    key={index}
-                                    className="bg-gray-50 rounded-xl p-4 md:p-6"
-                                >
-                                    <feature.icon className={`w-6 h-6 md:w-8 md:h-8 ${feature.color} mb-3 md:mb-4`} />
-                                    <p className="text-base md:text-lg font-medium text-gray-700">{feature.text}</p>
-                                </div>
-                            ))}
                         </div>
                     </div>
                 </Card>
@@ -324,162 +245,207 @@ const Login = () => {
 
     return (
         <main className="flex-1">
-            <div className="min-h-[calc(100vh-64px)] w-full relative bg-gray-100">
-                {/* Background */}
+            <div className="min-h-screen w-full relative bg-slate-950 selection:bg-indigo-500/30 selection:text-white flex flex-col">
+                {/* Fondo: imagen + gradiente */}
                 <div className="absolute inset-0 z-0">
-                    <img
-                        src={EventoBanner}
-                        alt="Festival Background"
-                        className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/90 via-cyan-800/50 to-amber-700/20 backdrop-blur-sm"></div>
+                    <img src={RunnerBanner} alt="Running Background" className="w-full h-full object-cover" loading="eager" decoding="async" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-blue-900/70 to-indigo-700/40" />
+                    <div className="absolute inset-0 backdrop-blur-[1px]" />
                 </div>
 
-                {/* Renderizado condicional basado en el modo de mantenimiento */}
                 {MAINTENANCE_MODE ? (
                     <MaintenanceScreen />
                 ) : (
-                    <div className="relative z-10 w-full h-full py-8 px-4 md:py-12">
-                        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8">
-                            {/* Left Section */}
-                            <div className="w-full lg:w-1/2 text-white space-y-6 lg:space-y-8">
-                                <div className="text-center lg:text-left">
-                                    <img
-                                        src={Logo}
-                                        alt="Logo"
-                                        className="h-16 md:h-24 mb-4 md:mb-6 mx-auto lg:mx-0"
-                                    />
-                                    <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-4 leading-tight">
-                                        36° Festival Provincial del Artesano
-                                    </h1>
-                                    <p className="text-lg md:text-xl text-gray-200 mb-6 md:mb-8">
-                                        Celebrando nuestra cultura y tradición
-                                    </p>
-                                </div>
+                    <div className="relative z-10 flex-1 flex flex-col">
+                        {/* Contenido principal */}
+                        <div className="flex-1 flex items-center justify-center px-4 py-8">
+                            <div className="max-w-7xl w-full mx-auto">
+                                {/* MISMA ALTURA Y CENTRADOS */}
+                                <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
+                                    {/* IZQUIERDA */}
+                                    <section className="text-white h-full">
+                                        {/* Contenedor igual al formulario */}
+                                        <div className="bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-lg rounded-3xl p-6 border border-white/25 shadow-2xl min-h-[620px] h-full flex flex-col">
+                                            {/* Logo grande y centrado */}
+                                            <div className="flex items-center justify-center mb-6">
+                                                <img
+                                                    src={Logo10K}
+                                                    alt="Logo 10K del Maestro"
+                                                    className="h-32 md:h-40 lg:h-48 xl:h-52 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform duration-300 filter brightness-110"
+                                                />
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-                                    {features.map((feature, index) => (
-                                        <div
-                                            key={index}
-                                            className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 hover:bg-white/20 transition-all"
-                                        >
-                                            <feature.icon className={`w-6 h-6 md:w-8 md:h-8 ${feature.color} mb-3 md:mb-4`} />
-                                            <p className="text-base md:text-lg font-medium">{feature.text}</p>
+                                            </div>
+
+                                            {/* Info evento */}
+                                            <div className="space-y-5 flex-1 flex flex-col justify-start">
+                                                {/* Ubicación / Fecha */}
+                                                <div className="text-center space-y-4">
+
+
+                                                    <div className="flex items-center justify-center gap-4">
+                                                        <div className="h-px bg-gradient-to-r from-transparent via-white/40 to-transparent flex-1"></div>
+                                                        <div className="w-2 h-2 bg-white/60 rounded-full"></div>
+                                                        <div className="h-px bg-gradient-to-r from-transparent via-white/40 to-transparent flex-1"></div>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-center gap-3">
+                                                        <HiOutlineCalendar className="w-6 h-6 text-blue-300" />
+                                                        <span className="text-lg md:text-xl font-semibold text-blue-100">7 de Septiembre 2025</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Distancias */}
+                                                <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-2xl p-5 border border-white/15">
+                                                    <h3 className="text-lg font-bold mb-4 text-center">Distancias Disponibles</h3>
+                                                    <div className="flex justify-center items-center gap-8">
+                                                        <div className="text-center group">
+                                                            <div className="text-2xl font-black text-sky-300 drop-shadow-lg group-hover:scale-110 transition-transform">5K</div>
+                                                            <div className="text-sm text-blue-200 font-medium">Recreativa</div>
+                                                        </div>
+                                                        <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/30 to-transparent"></div>
+                                                        <div className="text-center group">
+                                                            <div className="text-3xl font-black text-yellow-300 drop-shadow-lg group-hover:scale-110 transition-transform">10K</div>
+                                                            <div className="text-sm text-blue-200 font-medium">Competitiva</div>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-center text-xs text-blue-200/80 mt-3">Incluye remera técnica, chip de cronometraje y kit del atleta</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Features */}
+                                            <div className="grid grid-cols-3 gap-3 mt-6">
+                                                {features.map((f, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-xl p-3 border border-white/15 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group text-center"
+                                                    >
+                                                        <f.icon className={`w-5 h-5 ${f.color} mb-2 drop-shadow group-hover:scale-110 transition-transform mx-auto`} />
+                                                        <p className="text-xs font-semibold text-white leading-tight">{f.text}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    ))}
+                                    </section>
+
+                                    {/* DERECHA */}
+                                    <aside className="w-full h-full">
+                                        <Card className="backdrop-blur-2xl bg-white/95 shadow-[0_20px_70px_rgba(0,0,0,0.3)] border border-white/60 w-full rounded-3xl min-h-[620px] h-full flex">
+                                            <div className="p-6 flex flex-col justify-between w-full">
+                                                <div className="space-y-5">
+                                                    <h2 className="text-2xl md:text-3xl font-black text-center bg-gradient-to-r from-indigo-600 via-sky-600 to-purple-600 bg-clip-text text-transparent">
+                                                        ¡Sumate a la carrera!
+                                                    </h2>
+
+                                                    {error && (
+                                                        <Alert color="failure" icon={HiOutlineInformationCircle}>
+                                                            {error}
+                                                        </Alert>
+                                                    )}
+
+                                                    <form className="space-y-4" onSubmit={handleSubmit}>
+                                                        <div>
+                                                            <div className="mb-2 block">
+                                                                <Label htmlFor="email" value="Correo Electrónico" />
+                                                            </div>
+                                                            <TextInput
+                                                                id="email"
+                                                                type="email"
+                                                                icon={HiOutlineMail}
+                                                                value={email}
+                                                                onChange={(e) => setEmail(e.target.value)}
+                                                                placeholder="tu@email.com"
+                                                                required
+                                                                className="focus:ring-2 focus:ring-sky-400"
+                                                            />
+                                                        </div>
+
+                                                        <div>
+                                                            <div className="mb-2 block">
+                                                                <Label htmlFor="password" value="Contraseña" />
+                                                            </div>
+                                                            <TextInput
+                                                                id="password"
+                                                                type="password"
+                                                                icon={HiOutlineLockClosed}
+                                                                value={password}
+                                                                onChange={(e) => setPassword(e.target.value)}
+                                                                placeholder="••••••••"
+                                                                required
+                                                                className="focus:ring-2 focus:ring-sky-400"
+                                                            />
+                                                        </div>
+
+                                                        <Button
+                                                            type="submit"
+                                                            className="w-full bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-sky-300"
+                                                            disabled={isLoading}
+                                                        >
+                                                            {isLoading ? (
+                                                                <>
+                                                                    <Spinner size="sm" light={true} />
+                                                                    <span className="ml-2">Ingresando...</span>
+                                                                </>
+                                                            ) : (
+                                                                'INGRESAR'
+                                                            )}
+                                                        </Button>
+                                                    </form>
+
+                                                    <div className="relative">
+                                                        <div className="absolute inset-0 flex items-center">
+                                                            <div className="w-full border-t border-gray-300"></div>
+                                                        </div>
+                                                        <div className="relative flex justify-center text-sm">
+                                                            <span className="px-3 bg-white text-gray-500 rounded-lg font-medium">O continuá con</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <Button
+                                                        color="light"
+                                                        className="w-full hover:bg-white/80 transition-colors border-2 border-gray-200 hover:border-gray-300"
+                                                        onClick={handleGoogleLogin}
+                                                        disabled={isLoading}
+                                                    >
+                                                        {isLoading ? (
+                                                            <>
+                                                                <Spinner size="sm" />
+                                                                <span className="ml-2">Iniciando sesión con Google...</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <img
+                                                                    className="h-5 w-5 mr-3"
+                                                                    src="https://www.svgrepo.com/show/475656/google-color.svg"
+                                                                    alt="Google Logo"
+                                                                    loading="lazy"
+                                                                    decoding="async"
+                                                                />
+                                                                Continuar con Google
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                </div>
+
+                                                <p className="text-center text-sm text-gray-600 mt-6">
+                                                    ¿No tenés cuenta?{' '}
+                                                    <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
+                                                        Registrate aquí
+                                                    </Link>
+                                                </p>
+                                            </div>
+                                        </Card>
+                                    </aside>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Right Section */}
-                            <div className="w-full lg:w-1/2 max-w-md">
-                                <Card className="backdrop-blur-xl bg-white/95 shadow-2xl border-none w-full">
-                                    <div className="space-y-6 md:space-y-8 p-4 md:p-6">
-                                        <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-800">
-                                            Bienvenido
-                                        </h2>
-
-                                        {error && (
-                                            <Alert color="failure" icon={HiOutlineInformationCircle}>
-                                                {error}
-                                            </Alert>
-                                        )}
-
-                                        <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
-                                            <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="email" value="Correo Electrónico" />
-                                                </div>
-                                                <TextInput
-                                                    id="email"
-                                                    type="email"
-                                                    icon={HiOutlineMail}
-                                                    value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
-                                                    placeholder="tu@email.com"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="password" value="Contraseña" />
-                                                </div>
-                                                <TextInput
-                                                    id="password"
-                                                    type="password"
-                                                    icon={HiOutlineLockClosed}
-                                                    value={password}
-                                                    onChange={(e) => setPassword(e.target.value)}
-                                                    placeholder="••••••••"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <Button
-                                                type="submit"
-                                                gradientDuoTone="cyanToBlue"
-                                                className="w-full"
-                                                disabled={isLoading}
-                                            >
-                                                {isLoading ? (
-                                                    <>
-                                                        <Spinner size="sm" light={true} />
-                                                        <span className="ml-2">Iniciando sesión...</span>
-                                                    </>
-                                                ) : (
-                                                    'Iniciar Sesión'
-                                                )}
-                                            </Button>
-                                        </form>
-
-                                        <div className="relative">
-                                            <div className="absolute inset-0 flex items-center">
-                                                <div className="w-full border-t border-gray-300"></div>
-                                            </div>
-                                            <div className="relative flex justify-center text-sm">
-                                                <span className="px-2 bg-zinc-100 text-gray-500">O continúa con</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="w-full">
-                                            <Button
-                                                color="light"
-                                                className="w-full"
-                                                onClick={handleGoogleLogin}
-                                                disabled={isLoading}
-                                            >
-                                                {isLoading ? (
-                                                    <>
-                                                        <Spinner size="sm" />
-                                                        <span className="ml-2">Iniciando sesión con Google...</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <img
-                                                            className="h-5 w-5 mr-2"
-                                                            src="https://www.svgrepo.com/show/475656/google-color.svg"
-                                                            alt="Google Logo"
-                                                        />
-                                                        Google
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </div>
-
-                                        <p className="text-center text-sm text-gray-600">
-                                            ¿No tenés cuenta?{' '}
-                                            <Link to="/register" className="font-medium text-cyan-600 hover:text-cyan-500">
-                                                Registrate aquí
-                                            </Link>
-                                        </p>
-                                    </div>
-                                </Card>
-                            </div>
+                        {/* Footer */}
+                        <div className="relative z-10">
+                            <Footer />
                         </div>
                     </div>
                 )}
             </div>
-            <Footer />
         </main>
     );
 };
