@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Login from './components/Login';
 import Register from './components/Register';
 import Evento from './components/evento/Evento';
+import EventoInfo from './components/evento/EventoInfo';
 import Registrar_compra from './components/evento/Registrar_compra';
 import Home from './components/menu/Home';
 import Bienvenida from './components/menu/Bienvenida';
@@ -19,7 +20,7 @@ import Loading from './components/ui/Loading';
 import InscripcionExitosa from './components/menu/IncripcionExito';
 import NotFound404 from './components/NotFound404';
 import MisInscripciones from './components/evento/MisIncripciones';
-import Shows from "./components/menu/Shows";
+
 // MercadoPago Context Provider
 const MercadoPagoProvider = ({ children }) => {
   const [mpInitialized, setMpInitialized] = useState(false);
@@ -122,10 +123,9 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<Evento />} />
+        <Route path="evento-info" element={<EventoInfo />} />
         <Route path="registrar_compra" element={<Registrar_compra />} />
         <Route path="mis_entradas" element={<MisInscripciones />} />
-        <Route path="shows" element={<Shows />} />
-
       </Route>
 
       {/* 404 Route */}

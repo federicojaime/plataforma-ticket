@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
-import FestivalBanner from "../../assets/img/festival.jpg";
+import RunnerBanner from "../../assets/img/runner-banner.jpg";
 import {
     HiOutlineCalendar,
     HiOutlineLocationMarker,
     HiOutlineClock,
     HiOutlineExclamationCircle,
-    HiOutlineTicket
+    HiOutlineTicket,
+    HiOutlineUsers
 } from "react-icons/hi";
+import { HiOutlineTrophy } from 'react-icons/hi2';
+import { FaRunning, FaMedal, FaTshirt } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import SkeletonLoader from '../ui/Skeletor';
 
@@ -18,34 +20,17 @@ const Evento = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [tickets, setTickets] = useState({
-        day1: 0,
-        day2: 0
+    const [inscripciones, setInscripciones] = useState({
+        '5k': 0,
+        '10k': 0
     });
-    const [idPreferencia, setIdPreferencia] = useState(null);
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [mpInitialized, setMpInitialized] = useState(false);
 
     const PRICES = {
-        day1: 15000,
-        day2: 8000
+        '5k': 8000,
+        '10k': 12000
     };
 
-    const MAX_TICKETS_PER_DAY = 5;
-
-    // Inicializar MercadoPago
-    useEffect(() => {
-        const initializeMp = async () => {
-            try {
-                initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY);
-                setMpInitialized(true);
-            } catch (error) {
-                console.error('Error initializing MercadoPago:', error);
-                toast.error('Error al inicializar el sistema de pago');
-            }
-        };
-        initializeMp();
-    }, []);
+    const MAX_INSCRIPCIONES = 3;
 
     // Verificar autenticación
     useEffect(() => {
@@ -63,93 +48,48 @@ const Evento = () => {
         checkAuth();
     }, [user]);
 
-    const handleTicketChange = (day, increment) => {
-        const newTicketCount = tickets[day] + increment;
+    const handleInscripcionChange = (distancia, increment) => {
+        const newCount = inscripciones[distancia] + increment;
 
-        // Check if trying to exceed maximum tickets
-        if (increment > 0 && newTicketCount > MAX_TICKETS_PER_DAY) {
-            toast.warning(`No puedes comprar más de ${MAX_TICKETS_PER_DAY} entradas por día`);
+        // Check if trying to exceed maximum inscripciones
+        if (increment > 0 && newCount > MAX_INSCRIPCIONES) {
+            toast.warning(`No puedes inscribir más de ${MAX_INSCRIPCIONES} personas por distancia`);
             return;
         }
 
-        setTickets(prev => ({
+        setInscripciones(prev => ({
             ...prev,
-            [day]: Math.max(0, newTicketCount)
+            [distancia]: Math.max(0, newCount)
         }));
 
-        // Reset preference ID when tickets change
-        if (idPreferencia) {
-            setIdPreferencia(null);
+        // Reset any saved data when inscripciones change
+        if (localStorage.getItem('inscripciones-seleccionadas')) {
+            localStorage.removeItem('inscripciones-seleccionadas');
         }
     };
 
-    const totalAmount = (tickets.day1 * PRICES.day1) + (tickets.day2 * PRICES.day2);
+    const totalAmount = (inscripciones['5k'] * PRICES['5k']) + (inscripciones['10k'] * PRICES['10k']);
+    const totalPersonas = inscripciones['5k'] + inscripciones['10k'];
 
-    const handleCheckout = async () => {
-        if (isProcessing) return;
-
-        if (tickets.day1 === 0 && tickets.day2 === 0) {
-            toast.warning("Debes seleccionar al menos una entrada.");
+    const handleContinuar = () => {
+        if (inscripciones['5k'] === 0 && inscripciones['10k'] === 0) {
+            toast.warning("Debes seleccionar al menos una inscripción.");
             return;
         }
 
-        setIsProcessing(true);
-        setError(null);
+        // Guardar las inscripciones seleccionadas en localStorage para pasarlas al formulario
+        localStorage.setItem('inscripciones-seleccionadas', JSON.stringify({
+            '5k': inscripciones['5k'],
+            '10k': inscripciones['10k'],
+            precios: PRICES,
+            total: totalAmount
+        }));
 
-        try {
-            const token = user?.jwt?.startsWith('Bearer ') ? user.jwt : `Bearer ${user.jwt}`;
-
-            const apiUrl = import.meta.env.VITE_API_URL;
-            const response = await fetch(`${apiUrl}/evento/crear-preferencia`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': token
-                },
-                body: JSON.stringify({
-                    tickets: {
-                        day1: tickets.day1,
-                        day2: tickets.day2
-                    }
-                }),
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    toast.error('Error de autenticación. Por favor, inicia sesión nuevamente.');
-                    navigate('/login');
-                    return;
-                }
-                throw new Error('Error al procesar la compra');
-            }
-
-            const data = await response.json();
-
-            if (!data.ok) {
-                throw new Error(data.msg || 'Error al crear la preferencia de pago');
-            }
-
-            if (!data.data?.preferenceId) {
-                throw new Error('Respuesta inválida del servidor');
-            }
-
-            setIdPreferencia(data.data.preferenceId);
-            toast.success('Perfecto, ahora hacé click y pagá con Mercado Pago.');
-
-        } catch (error) {
-            console.error('Error al procesar la compra:', error);
-            toast.error(error.message || 'Error al procesar la compra. Por favor, intenta más tarde.');
-            setError('Hubo un error al procesar la compra. Por favor, intenta más tarde.');
-        } finally {
-            setIsProcessing(false);
-        }
+        // Navegar al formulario de datos
+        navigate('/registrar_compra');
     };
 
-    const onMercadoPagoError = (error) => {
-        console.error('Error en MercadoPago:', error);
-        toast.error('Error en el proceso de pago');
-        navigate('/fallo-pago');
-    };
+
 
     if (loading) {
         return <SkeletonLoader />;
@@ -173,110 +113,91 @@ const Evento = () => {
         );
     }
 
-    const renderPaymentButton = () => {
-        if (idPreferencia && mpInitialized) {
-            return (
-                <div className="w-full">
-                    <Wallet
-                        initialization={{ preferenceId: idPreferencia }}
-                        customization={{
-                            texts: {
-                                action: 'Pagar la compra',
-                                valueProp: 'Pago seguro con Mercado Pago'
-                            },
-                            visual: {
-                                buttonBackground: '#17b1be',
-                                borderRadius: '8px'
-                            }
-                        }}
-                        onError={onMercadoPagoError}
-                    />
-                </div>
-            );
-        }
-
-        if (idPreferencia && !mpInitialized) {
-            return (
-                <div className="w-full text-center p-4">
-                    <div className="animate-pulse flex justify-center items-center gap-2">
-                        <div className="w-5 h-5 border-2 border-[#17b1be] border-t-transparent rounded-full animate-spin"></div>
-                        <span>Cargando método de pago...</span>
-                    </div>
-                </div>
-            );
-        }
-
+    const renderContinueButton = () => {
         return (
             <button
-                className="w-full bg-[#17b1be] hover:bg-[#17b1be]/90 text-white py-3.5 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleCheckout}
-                disabled={isProcessing || totalAmount === 0}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+                onClick={handleContinuar}
+                disabled={totalAmount === 0}
             >
-                {isProcessing ? (
-                    <div className="flex items-center justify-center gap-2">
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Procesando...</span>
-                    </div>
-                ) : (
-                    'Continuar compra'
-                )}
+                Continuar con la inscripción
             </button>
         );
     };
 
     return (
         <div className="bg-gray-50/80">
-            {/* Banner para PC */}
-            <div className="hidden md:block relative h-[25vh] w-full mb-4">
+            {/* Banner Hero */}
+            <div className="relative h-[40vh] w-full mb-8 overflow-hidden rounded-2xl">
                 <img
-                    src={FestivalBanner}
-                    alt="Festival Provincial del Artesano"
-                    className="w-full h-full object-cover object-left-top"
+                    src={RunnerBanner}
+                    alt="10K del Maestro"
+                    className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#00263b]/60 to-[#00263b]/30">
-                    <div className="h-full max-w-5xl mx-auto px-4 flex flex-col justify-end pb-6">
-                        <div className="inline-flex items-center gap-2 text-[#17b1be] mb-2">
-                            <HiOutlineCalendar className="w-5 h-5" />
-                            <span>2 y 3 de Enero de 2025</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-blue-900/60">
+                    <div className="h-full max-w-6xl mx-auto px-6 flex flex-col justify-end pb-8">
+                        <div className="text-white space-y-4">
+                            <div className="inline-flex items-center gap-2 text-blue-300 mb-2">
+                                <HiOutlineCalendar className="w-5 h-5" />
+                                <span className="text-lg font-semibold">7 de Septiembre 2025</span>
+                            </div>
+                            <h1 className="text-4xl md:text-6xl font-black leading-tight">
+                                ¡Inscribite al 10K del Maestro!
+                            </h1>
+                            <p className="text-xl text-blue-100 max-w-2xl">
+                                Elegí tu distancia, completá el pago y prepárate para vivir una experiencia única corriendo por la educación.
+                            </p>
                         </div>
-                        <h1 className="text-3xl font-bold text-white">
-                            36° Festival Provincial del Artesano
-                        </h1>
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-5xl mx-auto px-4">
-                <div className="grid md:grid-cols-3 gap-6">
-                    <div className="md:col-span-2 space-y-4">
-                        {/* Día 1 */}
-                        <div className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
-                            <div className="border-l-4 border-[#f9b603] px-6 py-5">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="text-xl font-bold text-[#00263b]">Jueves 2 de Enero</h3>
-                                            <span className="text-xs font-medium text-[#17b1be] bg-[#17b1be]/10 px-2 py-1 rounded-full">
-                                                Disponible
-                                            </span>
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="grid lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* 5K Recreativa */}
+                        <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                            <div className="border-l-4 border-blue-500 px-8 py-6">
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
+                                            <FaRunning className="w-8 h-8 text-blue-600" />
                                         </div>
-                                        <p className="text-sm text-gray-500">Primer día del festival</p>
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="text-2xl font-bold text-gray-900">5K Recreativa</h3>
+                                                <span className="text-xs font-medium text-blue-600 bg-blue-100 px-3 py-1 rounded-full">
+                                                    Disponible
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-600 text-sm mb-2">Perfecta para principiantes y familias</p>
+                                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                <span className="flex items-center gap-1">
+                                                    <FaTshirt className="w-4 h-4" />
+                                                    Remera técnica
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <FaMedal className="w-4 h-4" />
+                                                    Medalla finisher
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-6">
-                                        <p className="text-2xl font-bold text-[#00263b]">${PRICES.day1}</p>
-                                        <div className="flex items-center bg-gray-50 rounded-xl">
+                                        <p className="text-3xl font-black text-blue-600">${PRICES['5k'].toLocaleString()}</p>
+                                        <div className="flex items-center bg-gray-100 rounded-xl">
                                             <button
-                                                onClick={() => handleTicketChange('day1', -1)}
-                                                className="w-10 h-10 flex items-center justify-center text-[#00263b] hover:text-[#17b1be] transition-colors"
+                                                onClick={() => handleInscripcionChange('5k', -1)}
+                                                className="w-12 h-12 flex items-center justify-center text-gray-600 hover:text-blue-600 transition-colors text-xl font-bold"
                                             >
                                                 −
                                             </button>
-                                            <span className="w-12 text-center font-medium text-[#00263b]">
-                                                {tickets.day1}
+                                            <span className="w-12 text-center font-bold text-gray-900 text-lg">
+                                                {inscripciones['5k']}
                                             </span>
                                             <button
-                                                onClick={() => handleTicketChange('day1', 1)}
-                                                className="w-10 h-10 flex items-center justify-center text-[#00263b] hover:text-[#17b1be] transition-colors"
+                                                onClick={() => handleInscripcionChange('5k', 1)}
+                                                className="w-12 h-12 flex items-center justify-center text-gray-600 hover:text-blue-600 transition-colors text-xl font-bold"
                                             >
                                                 +
                                             </button>
@@ -286,34 +207,49 @@ const Evento = () => {
                             </div>
                         </div>
 
-                        {/* Día 2 */}
-                        <div className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
-                            <div className="border-l-4 border-[#17b1be] px-6 py-5">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="text-xl font-bold text-[#00263b]">Viernes 3 de Enero</h3>
-                                            <span className="text-xs font-medium text-[#17b1be] bg-[#17b1be]/10 px-2 py-1 rounded-full">
-                                                Disponible
-                                            </span>
+                        {/* 10K Competitiva */}
+                        <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                            <div className="border-l-4 border-purple-500 px-8 py-6">
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center">
+                                            <HiOutlineTrophy className="w-8 h-8 text-purple-600" />
                                         </div>
-                                        <p className="text-sm text-gray-500">Segundo día del festival</p>
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="text-2xl font-bold text-gray-900">10K Competitiva</h3>
+                                                <span className="text-xs font-medium text-purple-600 bg-purple-100 px-3 py-1 rounded-full">
+                                                    Disponible
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-600 text-sm mb-2">Con cronometraje oficial y premiación</p>
+                                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                <span className="flex items-center gap-1">
+                                                    <FaTshirt className="w-4 h-4" />
+                                                    Remera técnica
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <FaMedal className="w-4 h-4" />
+                                                    Medalla + Premio
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-6">
-                                        <p className="text-2xl font-bold text-[#00263b]">${PRICES.day2}</p>
-                                        <div className="flex items-center bg-gray-50 rounded-xl">
+                                        <p className="text-3xl font-black text-purple-600">${PRICES['10k'].toLocaleString()}</p>
+                                        <div className="flex items-center bg-gray-100 rounded-xl">
                                             <button
-                                                onClick={() => handleTicketChange('day2', -1)}
-                                                className="w-10 h-10 flex items-center justify-center text-[#00263b] hover:text-[#17b1be] transition-colors"
+                                                onClick={() => handleInscripcionChange('10k', -1)}
+                                                className="w-12 h-12 flex items-center justify-center text-gray-600 hover:text-purple-600 transition-colors text-xl font-bold"
                                             >
                                                 −
                                             </button>
-                                            <span className="w-12 text-center font-medium text-[#00263b]">
-                                                {tickets.day2}
+                                            <span className="w-12 text-center font-bold text-gray-900 text-lg">
+                                                {inscripciones['10k']}
                                             </span>
                                             <button
-                                                onClick={() => handleTicketChange('day2', 1)}
-                                                className="w-10 h-10 flex items-center justify-center text-[#00263b] hover:text-[#17b1be] transition-colors"
+                                                onClick={() => handleInscripcionChange('10k', 1)}
+                                                className="w-12 h-12 flex items-center justify-center text-gray-600 hover:text-purple-600 transition-colors text-xl font-bold"
                                             >
                                                 +
                                             </button>
@@ -325,73 +261,73 @@ const Evento = () => {
                     </div>
 
                     {/* Resumen y Checkout */}
-                    <div className="md:col-span-1">
-                        <div className="bg-[#00263b] text-white rounded-2xl shadow-lg p-6 sticky top-4">
-                            <div className="space-y-6 mb-6">
+                    <div className="lg:col-span-1">
+                        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl shadow-2xl p-8 sticky top-4">
+                            <div className="space-y-6 mb-8">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-[#17b1be]/10 flex items-center justify-center">
-                                        <HiOutlineLocationMarker className="w-5 h-5 text-[#17b1be]" />
+                                    <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                                        <HiOutlineLocationMarker className="w-6 h-6 text-blue-400" />
                                     </div>
                                     <div>
-                                        <p className="font-medium">Polideportivo Municipal</p>
-                                        <p className="text-sm text-gray-400">San Francisco del Monte de Oro</p>
+                                        <p className="font-bold text-white">Lugar de largada</p>
+                                        <p className="text-sm text-gray-300">San Francisco del Monte de Oro</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-[#17b1be]/10 flex items-center justify-center">
-                                        <HiOutlineClock className="w-5 h-5 text-[#17b1be]" />
+                                    <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                                        <HiOutlineClock className="w-6 h-6 text-green-400" />
                                     </div>
                                     <div>
-                                        <p className="font-medium">Desde las 20:00hs</p>
-                                        <p className="text-sm text-gray-400">en adelante</p>
+                                        <p className="font-bold text-white">Horarios</p>
+                                        <p className="text-sm text-gray-300">10K: 07:30hs • 5K: 08:00hs</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {(tickets.day1 > 0 || tickets.day2 > 0) && (
+                            {totalPersonas > 0 && (
                                 <>
-                                    <div className="border-t border-white/10 pt-6 mb-6">
-                                        <h4 className="flex items-center gap-2 font-medium mb-4">
-                                            <HiOutlineTicket className="w-5 h-5 text-[#17b1be]" />
-                                            <span>Resumen de compra</span>
+                                    <div className="border-t border-gray-600 pt-6 mb-6">
+                                        <h4 className="flex items-center gap-2 font-bold mb-4">
+                                            <HiOutlineTicket className="w-5 h-5 text-blue-400" />
+                                            <span>Resumen de inscripción</span>
                                         </h4>
-                                        {tickets.day1 > 0 && (
-                                            <div className="flex justify-between text-sm mb-2">
-                                                <span className="text-gray-400">2 de Enero × {tickets.day1}</span>
-                                                <span>${tickets.day1 * PRICES.day1}</span>
+                                        {inscripciones['5k'] > 0 && (
+                                            <div className="flex justify-between text-sm mb-3">
+                                                <span className="text-gray-300">5K Recreativa × {inscripciones['5k']}</span>
+                                                <span className="font-semibold">${(inscripciones['5k'] * PRICES['5k']).toLocaleString()}</span>
                                             </div>
                                         )}
-                                        {tickets.day2 > 0 && (
-                                            <div className="flex justify-between text-sm mb-2">
-                                                <span className="text-gray-400">3 de Enero × {tickets.day2}</span>
-                                                <span>${tickets.day2 * PRICES.day2}</span>
+                                        {inscripciones['10k'] > 0 && (
+                                            <div className="flex justify-between text-sm mb-3">
+                                                <span className="text-gray-300">10K Competitiva × {inscripciones['10k']}</span>
+                                                <span className="font-semibold">${(inscripciones['10k'] * PRICES['10k']).toLocaleString()}</span>
                                             </div>
                                         )}
-                                        <div className="flex justify-between font-bold text-lg mt-4">
-                                            <span>Total</span>
-                                            <span>${totalAmount}</span>
+                                        
+                                        <div className="border-t border-gray-600 pt-4 mt-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-gray-300">
+                                                    <HiOutlineUsers className="inline w-4 h-4 mr-1" />
+                                                    Total personas: {totalPersonas}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between font-bold text-xl">
+                                                <span>Total a pagar</span>
+                                                <span className="text-blue-400">${totalAmount.toLocaleString()}</span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {renderPaymentButton()}
+                                    {renderContinueButton()}
                                 </>
                             )}
-                        </div>
-                    </div>
-                </div>
 
-                {/* Banner para móvil */}
-                <div className="md:hidden relative h-[20vh] w-full mb-4 mt-4 rounded-lg">
-                    <img src={FestivalBanner} alt="Festival Provincial del Artesano" className="w-full h-full object-cover object-left-top rounded-lg" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#00263b]/60 to-[#00263b]/30">
-                        <div className="h-full max-w-5xl mx-auto px-4 flex flex-col justify-end pb-6">
-                            <div className="inline-flex items-center gap-2 text-[#17b1be] mb-2">
-                                <HiOutlineCalendar className="w-5 h-5" />
-                                <span>2 y 3 de Enero de 2025</span>
-                            </div>
-                            <h1 className="text-2xl font-bold text-white">
-                                36° Festival Provincial del Artesano
-                            </h1>
+                            {totalPersonas === 0 && (
+                                <div className="text-center py-8">
+                                    <FaRunning className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                                    <p className="text-gray-400">Selecciona las inscripciones que deseas realizar</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
