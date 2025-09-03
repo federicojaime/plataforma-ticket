@@ -30,8 +30,8 @@ const Evento = () => {
     });
 
     const PRICES = {
-        '5k': 1,
-        '10k': 2,
+        '5k': 15000,
+        '10k': 18000,
         'kid': 0,
         'discapacitado': 0
     };
@@ -54,26 +54,25 @@ const Evento = () => {
             color: 'purple',
             includes: [
                 { icon: FaTshirt, text: 'Remera técnica' },
-                { icon: FaMedal, text: 'Medalla + Premio' }
+                { icon: FaMedal, text: 'Medalla finisher' }
             ]
         },
-        'kid': {
+        'discapacitado': {
+            name: 'Categoría adaptado',
+            description: 'Para personas con discapacidad - ¡GRATUITA!',
+            icon: FaWheelchair,
+            color: 'orange',
+            includes: [
+                { icon: FaTshirt, text: 'Remera técnica' },
+                { icon: FaMedal, text: 'Medalla finisher' }
+            ]
+        }, 'kid': {
             name: 'Categoría Kids (hasta 14 años)',
             description: 'Distancia especial para los más pequeños - ¡GRATUITA!',
             icon: FaChild,
             color: 'green',
             includes: [
                 { icon: FaCheck, text: 'Solo participación' }
-            ]
-        },
-        'discapacitado': {
-            name: 'Categoría Inclusiva',
-            description: 'Para personas con discapacidad - ¡GRATUITA!',
-            icon: FaWheelchair,
-            color: 'orange',
-            includes: [
-                { icon: FaCheck, text: 'Solo participación' },
-                { icon: FaWheelchair, text: 'Asistencia especializada' }
             ]
         }
     };
@@ -310,15 +309,15 @@ const Evento = () => {
                     <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                         {/* Renderizar todas las categorías */}
                         {Object.keys(CATEGORIES_INFO).map(categoryKey => renderCategoryCard(categoryKey))}
-                        
+
                         {/* Nota informativa sobre categorías gratuitas */}
-                                                                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 sm:p-6 border border-green-200">
+                        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 sm:p-6 border border-green-200">
                             <div className="flex items-start gap-3">
                                 <FaCheck className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
                                 <div>
                                     <h3 className="font-bold text-green-800 mb-2">Categorías Gratuitas</h3>
                                     <p className="text-green-700 text-sm">
-                                        Las categorías <strong>Kids</strong> e <strong>Inclusiva</strong> son completamente gratuitas 
+                                        Las categorías <strong>Kids</strong> e <strong>Inclusiva</strong> son completamente gratuitas
                                         e incluyen solo la participación en el evento. No incluyen remera técnica ni kit del corredor.
                                     </p>
                                 </div>
@@ -375,7 +374,7 @@ const Evento = () => {
                                             }
                                             return null;
                                         })}
-                                        
+
                                         <div className="border-t border-gray-600 pt-3 sm:pt-4 mt-3 sm:mt-4">
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className="text-gray-300 text-xs sm:text-sm">

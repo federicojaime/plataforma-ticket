@@ -116,7 +116,7 @@ const Registrar_compra = () => {
             color: 'green'
         },
         'discapacitado': {
-            name: 'Categoría Inclusiva',
+            name: 'Categoría adaptado',
             icon: FaWheelchair,
             color: 'orange'
         }
@@ -126,17 +126,17 @@ const Registrar_compra = () => {
 
     // Códigos de descuento hardcodeados (basados en la tabla)
     const CODIGOS_DESCUENTO = {
-        'RUR9': { nombre: 'RUN URBANO', descuento: 500 },
-        'MEC2': { nombre: 'MERCURIO', descuento: 300 },
-        'MPC3': { nombre: 'MERCEDES PISTA Y CAMPO', descuento: 400 },
-        'PIV5': { nombre: 'PARQUE IV CENTENARIO', descuento: 350 },
-        'UNS1': { nombre: 'UNIVERSIDAD NACIONAL DE SAN LUIS', descuento: 250 },
-        'LLI4': { nombre: 'LOS LINCES', descuento: 450 },
-        'ZAR7': { nombre: 'ZARIGUEYAS RUNNING', descuento: 200 },
-        'PRY1': { nombre: 'PROYECTO 1', descuento: 600 },
-        'ESR6': { nombre: 'ESTATU RUN', descuento: 380 },
-        'CAE8': { nombre: 'CENTRO DE ALTO RENDIMIENTO DEPORTIVO (CARD)', descuento: 550 },
-        'ACG3': { nombre: 'AGRUPACION CLAUDIO GUTIERREZ', descuento: 320 }
+        'RUR9': { nombre: 'RUN URBANO', descuento: 2000 },
+        'MEC2': { nombre: 'MERCURIO', descuento: 2000 },
+        'MPC3': { nombre: 'MERCEDES PISTA Y CAMPO', descuento: 2000 },
+        'PIV5': { nombre: 'PARQUE IV CENTENARIO', descuento: 2000 },
+        'UNS1': { nombre: 'UNIVERSIDAD NACIONAL DE SAN LUIS', descuento: 2000 },
+        'LLI4': { nombre: 'LOS LINCES', descuento: 2000 },
+        'ZAR7': { nombre: 'ZARIGUEYAS RUNNING', descuento: 2000 },
+        'PRY1': { nombre: 'PROYECTO 1', descuento: 2000 },
+        'ESR6': { nombre: 'ESTATU RUN', descuento: 2000 },
+        'CAE8': { nombre: 'CENTRO DE ALTO RENDIMIENTO DEPORTIVO (CARD)', descuento: 2000 },
+        'ACG3': { nombre: 'AGRUPACION CLAUDIO GUTIERREZ', descuento: 2000 }
     };
 
     // Cargar datos de inscripciones al montar el componente
@@ -352,7 +352,7 @@ const Registrar_compra = () => {
 
         // Validación para certificado de discapacidad si es categoría inclusiva
         if (persona.distancia === 'discapacitado' && !persona.declara_certificado_discapacidad) {
-            errors.push("Debe declarar que llevará su certificado de discapacidad para la categoría inclusiva.");
+            errors.push("Debe declarar que llevará su certificado de discapacidad para la categoría adaptado.");
         }
 
         return errors;
@@ -910,7 +910,7 @@ const Registrar_compra = () => {
                                                     Certificado de Discapacidad
                                                 </Label>
                                                 <p className="text-orange-800 text-sm mt-1">
-                                                    Declaro que llevaré mi certificado de discapacidad para validar mi participación en la categoría inclusiva el día del evento.
+                                                    Declaro que llevaré mi certificado de discapacidad para validar mi participación en la categoría adaptado el día del evento.
                                                 </p>
                                             </div>
                                         </div>

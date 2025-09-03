@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from "../../context/AuthContext";
 import { HiOutlineTicket, HiOutlineInformationCircle, HiOutlinePrinter, HiOutlineCalendar, HiOutlineQrcode, HiOutlineUser, HiOutlinePhone } from "react-icons/hi";
-import { FaRunning, FaMedal, FaTshirt, FaIdCard } from 'react-icons/fa';
+import { FaRunning, FaMedal, FaTshirt, FaIdCard, FaChild, FaWheelchair } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 const MisInscripciones = () => {
@@ -21,20 +21,19 @@ const MisInscripciones = () => {
             const apiUrl = import.meta.env.VITE_API_URL;
             const response = await fetch(`${apiUrl}/carrera/mis-inscripciones`, {
                 headers: {
-                    'Authorization': user.jwt
+                    'Authorization': user.jwt,
+                    'Content-Type': 'application/json'
                 }
             });
+            
             const data = await response.json();
+            console.log('Respuesta del servidor:', data); // Para debug
+            
             if (data.ok) {
-                // FILTRAR SOLO APPROVED Y PENDING EN EL FRONTEND
-                const inscripcionesFiltradas = (data.data || []).filter(inscripcion => 
-                    inscripcion.status === 'confirmed' || 
-                    inscripcion.status === 'approved' || 
-                    inscripcion.status === 'pending'
-                );
-                setInscripciones(inscripcionesFiltradas);
+                setInscripciones(data.data || []);
+                setError(null);
             } else {
-                setError(data.msg);
+                setError(data.msg || 'Error al cargar las inscripciones');
             }
         } catch (error) {
             console.error('Error:', error);
@@ -49,7 +48,7 @@ const MisInscripciones = () => {
         switch (estado?.toLowerCase()) {
             case 'confirmed':
             case 'approved':
-                return 'Aprobado';
+                return 'Confirmado';
             case 'pending':
                 return 'Pendiente';
             case 'cancelled':
@@ -84,7 +83,7 @@ const MisInscripciones = () => {
         let toastId = null;
         try {
             setIsPrinting(true);
-            toastId = toast.loading('Generando entrada...');
+            toastId = toast.loading('Generando inscripción...');
             
             const apiUrl = import.meta.env.VITE_API_URL;
             const response = await fetch(`${apiUrl}/carrera/reimprimir-entrada/${qrCode}`, {
@@ -95,7 +94,7 @@ const MisInscripciones = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.msg || 'Error al generar la entrada');
+                throw new Error(errorData.msg || 'Error al generar la inscripción');
             }
 
             const blob = await response.blob();
@@ -109,13 +108,13 @@ const MisInscripciones = () => {
             document.body.removeChild(a);
 
             toast.dismiss(toastId);
-            toast.success('Entrada generada exitosamente');
+            toast.success('Inscripción generada exitosamente');
         } catch (error) {
             console.error('Error:', error);
             if (toastId) {
                 toast.dismiss(toastId);
             }
-            toast.error(error.message || 'Error al generar la entrada');
+            toast.error(error.message || 'Error al generar la inscripción');
         } finally {
             setIsPrinting(false);
         }
@@ -144,6 +143,7 @@ const MisInscripciones = () => {
     };
 
     const formatAmount = (amount) => {
+        if (amount === 0) return 'GRATUITA';
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
             currency: 'ARS'
@@ -151,10 +151,40 @@ const MisInscripciones = () => {
     };
 
     const getDistanciaIcon = (distancia) => {
-        return distancia === '10k' ? FaMedal : FaRunning;
+        switch (distancia) {
+            case '10k':
+                return FaMedal;
+            case '5k':
+                return FaRunning;
+            case 'kid':
+                return FaChild;
+            case 'discapacitado':
+                return FaWheelchair;
+            default:
+                return FaRunning;
+        }
     };
 
-    // FUNCIÓN PARA VERIFICAR SI PUEDE DESCARGAR (SOLO APROBADOS)
+    const getDistanciaTexto = (distancia) => {
+        switch (distancia) {
+            case '10k':
+                return '10K Categoría';
+            case '5k':
+                return '5K Categoría';
+            case 'kid':
+                return 'Kids (Gratuita)';
+            case 'discapacitado':
+                return 'Inclusiva (Gratuita)';
+            default:
+                return distancia?.toUpperCase() || '';
+        }
+    };
+
+    const isGratuita = (distancia) => {
+        return distancia === 'kid' || distancia === 'discapacitado';
+    };
+
+    // FUNCIÓN PARA VERIFICAR SI PUEDE DESCARGAR (SOLO CONFIRMADOS)
     const puedeDescargar = (estado) => {
         return estado === 'confirmed' || estado === 'approved';
     };
@@ -200,14 +230,14 @@ const MisInscripciones = () => {
             {inscripciones.length > 0 ? (
                 <div className="space-y-6">
                     {inscripciones.map((inscripcion) => (
-                        <div key={inscripcion.id} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div key={inscripcion.external_reference} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                             {/* Header de la inscripción */}
                             <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 border-b">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                                             <HiOutlineTicket className="text-blue-600" />
-                                            Inscripción #{inscripcion.external_reference || inscripcion.id}
+                                            Inscripción #{inscripcion.external_reference}
                                         </h3>
                                         <p className="text-sm text-gray-600 mt-1 flex items-center gap-1">
                                             <HiOutlineCalendar className="text-gray-500" />
@@ -218,7 +248,6 @@ const MisInscripciones = () => {
                                         <p className="text-lg font-bold text-blue-600">
                                             {formatAmount(inscripcion.total_amount)}
                                         </p>
-                                        {/* USAR LAS FUNCIONES DE TRADUCCIÓN */}
                                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(inscripcion.status)}`}>
                                             {getEstadoTexto(inscripcion.status)}
                                         </span>
@@ -236,6 +265,8 @@ const MisInscripciones = () => {
                                 <div className="grid gap-4 md:grid-cols-2">
                                     {inscripcion.participantes?.map((participante, index) => {
                                         const DistanciaIcon = getDistanciaIcon(participante.distancia);
+                                        const esGratuita = isGratuita(participante.distancia);
+                                        
                                         return (
                                             <div key={index} className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow">
                                                 {/* Info del participante */}
@@ -252,22 +283,36 @@ const MisInscripciones = () => {
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${participante.distancia === '10k' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
-                                                            <DistanciaIcon className="w-4 h-4" />
-                                                            {participante.distancia?.toUpperCase()} {participante.distancia === '10k' ? '' : ''}
-                                                        </span>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                                                                participante.distancia === '10k' ? 'bg-purple-100 text-purple-800' :
+                                                                participante.distancia === '5k' ? 'bg-blue-100 text-blue-800' :
+                                                                participante.distancia === 'kid' ? 'bg-green-100 text-green-800' :
+                                                                'bg-orange-100 text-orange-800'
+                                                            }`}>
+                                                                <DistanciaIcon className="w-4 h-4" />
+                                                                {getDistanciaTexto(participante.distancia)}
+                                                            </span>
+                                                            {esGratuita && (
+                                                                <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full text-center">
+                                                                    GRATIS
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Detalles adicionales */}
                                                 <div className="border-t pt-3 space-y-2">
-                                                    <div className="flex justify-between text-sm">
-                                                        <span className="text-gray-600 flex items-center gap-1">
-                                                            <FaTshirt className="w-4 h-4" />
-                                                            Talle:
-                                                        </span>
-                                                        <span className="font-medium">{participante.talle_remera}</span>
-                                                    </div>
+                                                    {!esGratuita && (
+                                                        <div className="flex justify-between text-sm">
+                                                            <span className="text-gray-600 flex items-center gap-1">
+                                                                <FaTshirt className="w-4 h-4" />
+                                                                Talle:
+                                                            </span>
+                                                            <span className="font-medium">{participante.talle_remera}</span>
+                                                        </div>
+                                                    )}
                                                     <div className="flex justify-between text-sm">
                                                         <span className="text-gray-600">Categoría:</span>
                                                         <span className="font-medium">{participante.categoria_edad}</span>
@@ -289,7 +334,7 @@ const MisInscripciones = () => {
                                                     )}
                                                 </div>
 
-                                                {/* Botón de imprimir - SOLO PARA APROBADOS */}
+                                                {/* Botón de imprimir - SOLO PARA CONFIRMADOS */}
                                                 {participante.qr_code && puedeDescargar(inscripcion.status) && (
                                                     <div className="mt-4">
                                                         <button
@@ -298,7 +343,7 @@ const MisInscripciones = () => {
                                                             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                                         >
                                                             <HiOutlinePrinter />
-                                                            {isPrinting ? 'Generando...' : 'Descargar Entrada'}
+                                                            {isPrinting ? 'Generando...' : 'Descargar inscripción'}
                                                         </button>
                                                     </div>
                                                 )}
@@ -308,7 +353,7 @@ const MisInscripciones = () => {
                                                     <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                                                         <div className="flex items-center text-yellow-800 text-sm">
                                                             <HiOutlineInformationCircle className="w-4 h-4 mr-2" />
-                                                            <span>La entrada estará disponible una vez confirmado el pago</span>
+                                                            <span>La inscripción estará disponible una vez confirmado el pago</span>
                                                         </div>
                                                     </div>
                                                 )}
@@ -323,8 +368,8 @@ const MisInscripciones = () => {
                                     <ul className="text-sm text-blue-800 space-y-1">
                                         <li>• Fecha: 7 de Septiembre 2025</li>
                                         <li>• Lugar: San Francisco del Monte de Oro</li>
-                                        <li>• Largada 10K: 07:30hs - 5K: 08:00hs</li>
-                                        <li>• Presentar DNI y entrada el día del evento</li>
+                                        <li>• Largada 10K: 07:30hs - 5K: 08:00hs - Kids: 08:30hs</li>
+                                        <li>• Presentar DNI y inscripción el día del evento</li>
                                     </ul>
                                 </div>
                             </div>

@@ -33,7 +33,7 @@ const InscripcionExitosa = () => {
     ];
 
     const recommendations = [
-        { icon: HiOutlineTicket, text: "Recordá llevar tu entrada con QR digital o impresa." },
+        { icon: HiOutlineTicket, text: "Recordá llevar tu inscripción con QR digital o impresa." },
         { icon: HiOutlineClock, text: "Llegá temprano para el calentamiento y acreditaciones." },
         { icon: FaTrophy, text: "Participá en la premiación y sorteos especiales." },
         { icon: FaRunning, text: "Disfrutá de la experiencia y corré por la educación." }
@@ -98,7 +98,7 @@ const InscripcionExitosa = () => {
                                                         <div className="text-sm text-blue-200 font-medium">Largada desde las 07:30hs</div>
                                                     </div>
                                                 </div>
-                                                <p className="text-center text-xs text-blue-200/80 mt-3">En minutos recibirás tus entradas por email</p>
+                                                <p className="text-center text-xs text-blue-200/80 mt-3">En minutos recibirás tus inscripciones por email</p>
                                             </div>
                                         </div>
 
@@ -128,10 +128,10 @@ const InscripcionExitosa = () => {
                                                     </div>
                                                     
                                                     <h2 className="text-3xl font-black text-center bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
-                                                        ¡Ya tenés tus entradas!
+                                                        ¡Ya tenés tu inscripción!
                                                     </h2>
                                                     <p className="text-gray-600 mb-6">
-                                                        Ya sos parte del 10K del Maestro. En minutos recibirás tus entradas en el correo o ingresá a "Mis Inscripciones" para descargarlas.
+                                                        Ya sos parte del 10K del Maestro. En minutos recibirás tus inscripciones en el correo o ingresá a "Mis Inscripciones" para descargarlas.
                                                     </p>
                                                 </div>
 

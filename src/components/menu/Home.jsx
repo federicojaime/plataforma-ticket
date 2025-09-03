@@ -114,6 +114,8 @@ const Home = () => {
                                     </p>
 
                                     <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl p-4 border border-blue-100 shadow-sm">
+                                        <p className="text-gray-600 font-medium">
+                                            Categorías                                        </p>
                                         <div className="flex items-center justify-center space-x-4">
                                             <div className="text-center">
                                                 <div className="text-2xl font-black text-sky-600">5K</div>

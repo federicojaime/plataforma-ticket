@@ -20,18 +20,18 @@ const EventoInfo = () => {
         { hora: "07:00", actividad: "Calentamiento grupal" },
         { hora: "07:30", actividad: "Largada 10K" },
         { hora: "08:00", actividad: "Largada 5K" },
-        { hora: "08:30", actividad: "Largada Kids y Categoría Inclusiva" },
+        { hora: "08:30", actividad: "Largada Kids y Categoría adaptado" },
         { hora: "09:30", actividad: "Premiación y sorteos" },
         { hora: "10:30", actividad: "Cierre del evento" }
     ];
 
     const premios = [
-        { categoria: "10K Masculino", premios: "1°, 2° y 3° puesto general" },
-        { categoria: "10K Femenino", premios: "1°, 2° y 3° puesto general" },
+        { categoria: "10K Masculino", premios: "1° a 5° puesto general" },
+        { categoria: "10K Femenino", premios: "1° a 5° puesto general" },
         { categoria: "Por categorías", premios: "1° puesto en cada categoría de edad" },
-        { categoria: "5K Participación", premios: "Medalla para todos los finishers" },
-        { categoria: "Kids", premios: "Medalla especial para todos los participantes" },
-        { categoria: "Categoría Inclusiva", premios: "Medalla de reconocimiento especial" }
+        { categoria: "5K Categoría", premios: "Medalla para todos los finishers" },
+        { categoria: "Kids", premios: "Sorpresas para todos los participantes" },
+        { categoria: "Categoría adaptado", premios: "Medalla de reconocimiento especial" }
     ];
 
     const incluye = [
@@ -42,7 +42,7 @@ const EventoInfo = () => {
         "Hidratación durante el recorrido",
         "Asistencia médica en el circuito",
         "Kit especial para categoría Kids",
-        "Asistencia especializada para categoría inclusiva"
+        "Asistencia especializada para categoría adaptado"
     ];
 
     const categorias = [
@@ -71,7 +71,7 @@ const EventoInfo = () => {
             details: "Distancia especial adaptada para los más pequeños"
         },
         {
-            name: "Categoría Inclusiva",
+            name: "Categoría adaptado",
             description: "Para personas con discapacidad",
             icon: FaWheelchair,
             color: "orange",
@@ -155,14 +155,13 @@ const EventoInfo = () => {
                         {categorias.map((categoria, index) => {
                             const IconComponent = categoria.icon;
                             const isGratuita = categoria.price === "GRATUITA";
-                            
+
                             return (
-                                <div key={index} className={`text-center p-6 rounded-2xl border relative overflow-hidden transition-transform hover:scale-105 ${
-                                    categoria.color === 'blue' ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100' :
+                                <div key={index} className={`text-center p-6 rounded-2xl border relative overflow-hidden transition-transform hover:scale-105 ${categoria.color === 'blue' ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100' :
                                     categoria.color === 'purple' ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100' :
-                                    categoria.color === 'green' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-100' :
-                                    'bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100'
-                                }`}>
+                                        categoria.color === 'green' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-100' :
+                                            'bg-gradient-to-br from-orange-50 to-amber-50 border-orange-100'
+                                    }`}>
                                     {isGratuita && (
                                         <div className="absolute top-2 right-2">
                                             <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
@@ -171,18 +170,16 @@ const EventoInfo = () => {
                                             </span>
                                         </div>
                                     )}
-                                    <IconComponent className={`w-12 h-12 mx-auto mb-4 ${
-                                        categoria.color === 'blue' ? 'text-blue-600' :
+                                    <IconComponent className={`w-12 h-12 mx-auto mb-4 ${categoria.color === 'blue' ? 'text-blue-600' :
                                         categoria.color === 'purple' ? 'text-purple-600' :
-                                        categoria.color === 'green' ? 'text-green-600' :
-                                        'text-orange-600'
-                                    }`} />
-                                    <h3 className={`text-xl font-black mb-2 ${
-                                        categoria.color === 'blue' ? 'text-blue-700' :
+                                            categoria.color === 'green' ? 'text-green-600' :
+                                                'text-orange-600'
+                                        }`} />
+                                    <h3 className={`text-xl font-black mb-2 ${categoria.color === 'blue' ? 'text-blue-700' :
                                         categoria.color === 'purple' ? 'text-purple-700' :
-                                        categoria.color === 'green' ? 'text-green-700' :
-                                        'text-orange-700'
-                                    }`}>
+                                            categoria.color === 'green' ? 'text-green-700' :
+                                                'text-orange-700'
+                                        }`}>
                                         {categoria.name}
                                     </h3>
                                     <p className="text-gray-600 text-sm mb-2">{categoria.description}</p>
@@ -191,7 +188,7 @@ const EventoInfo = () => {
                             );
                         })}
                     </div>
-                    
+
                     {/* Nota especial sobre categorías gratuitas */}
                     <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl border border-green-100">
                         <div className="flex items-center justify-center mb-4">
@@ -247,7 +244,7 @@ const EventoInfo = () => {
                         <HiOutlineGift className="w-8 h-8 text-green-500 mr-3" />
                         ¿Qué incluye cada categoría?
                     </h2>
-                    
+
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Categorías pagas */}
                         <div className="space-y-4">
@@ -293,7 +290,7 @@ const EventoInfo = () => {
                                 </div>
                                 <div className="flex items-center p-4 bg-green-50 rounded-xl border border-green-100">
                                     <FaWheelchair className="w-6 h-6 text-green-600 mr-4 flex-shrink-0" />
-                                    <span className="text-gray-800">Asistencia especializada (categoría inclusiva)</span>
+                                    <span className="text-gray-800">Asistencia especializada (categoría adaptado)</span>
                                 </div>
                                 <div className="flex items-center p-4 bg-green-50 rounded-xl border border-green-100">
                                     <HiOutlineHeart className="w-6 h-6 text-green-600 mr-4 flex-shrink-0" />
@@ -317,7 +314,7 @@ const EventoInfo = () => {
                     </h2>
                     <div className="space-y-4 text-gray-700">
                         <p>• Es obligatorio presentar certificado médico apto para la práctica deportiva.</p>
-                        <p>• Para la categoría inclusiva se requiere certificado de discapacidad.</p>
+                        <p>• Para la categoría adaptado se requiere certificado de discapacidad.</p>
                         <p>• La categoría Kids es para menores de 15 años únicamente.</p>
                         <p>• La inscripción incluye seguro de accidentes personales durante el evento.</p>
                         <p>• El evento se realizará independientemente de las condiciones climáticas.</p>
@@ -332,14 +329,20 @@ const EventoInfo = () => {
                     <h2 className="text-3xl font-bold mb-8 text-center">¿Necesitas más información?</h2>
                     <div className="grid md:grid-cols-2 gap-8">
                         <div className="text-center">
-                            <HiOutlinePhone className="w-12 h-12 mx-auto mb-4 text-blue-200" />
-                            <h3 className="text-xl font-bold mb-2">Teléfono</h3>
-                            <p className="text-blue-100">+54 9 266 123-4567</p>
+                            <a
+                                href="https://wa.me/5492664776313"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block"
+                            >
+                                <HiOutlinePhone className="w-12 h-12 mx-auto mb-4 text-blue-200" />
+                                <h3 className="text-xl font-bold mb-2">Teléfono</h3>
+                                <p className="text-blue-100">+54 9 266 4776313</p></a>
                         </div>
                         <div className="text-center">
                             <HiOutlineMail className="w-12 h-12 mx-auto mb-4 text-blue-200" />
                             <h3 className="text-xl font-bold mb-2">Email</h3>
-                            <p className="text-blue-100">info@10kdelmaestro.com</p>
+                            <p className="text-blue-100">evento@vivisanfrancisco.com</p>
                         </div>
                     </div>
                 </div>
