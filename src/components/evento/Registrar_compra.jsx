@@ -16,30 +16,31 @@ const Registrar_compra = () => {
     const [showSizeGuide, setShowSizeGuide] = useState(false);
     const navigate = useNavigate();
 
-    // Funciones para calcular edad y categoría
+    // Funciones para calcular edad y categoría - CORREGIDAS PARA PERMITIR 15 AÑOS EN 5K/10K
     const calcularEdad = (fechaNacimiento) => {
         if (!fechaNacimiento) return 0;
-        
+
         const hoy = new Date();
         const nacimiento = new Date(fechaNacimiento);
-        
+
         // Fecha del evento: 7 de septiembre 2025
         const fechaEvento = new Date('2025-09-07');
-        
+
         let edad = fechaEvento.getFullYear() - nacimiento.getFullYear();
         const mesEvento = fechaEvento.getMonth();
         const mesNacimiento = nacimiento.getMonth();
-        
+
         if (mesEvento < mesNacimiento || (mesEvento === mesNacimiento && fechaEvento.getDate() < nacimiento.getDate())) {
             edad--;
         }
-        
+
         return edad;
     };
 
     const obtenerCategoria = (edad) => {
-        if (edad < 15) return "kids";
-        if (edad >= 15 && edad <= 19) return "15-19";
+        // CORREGIDO: Ahora los de 15 años pueden ir a 5K/10K, Kids solo para menores de 15
+        if (edad < 15) return "kids"; // Solo menores de 15 años
+        if (edad >= 15 && edad <= 19) return "15-19"; // Incluye los de 15 años
         if (edad >= 20 && edad <= 24) return "20-24";
         if (edad >= 25 && edad <= 29) return "25-29";
         if (edad >= 30 && edad <= 34) return "30-34";
@@ -93,8 +94,8 @@ const Registrar_compra = () => {
         acepta_promocion: false,
         acepta_reglamento: false,
         acepta_deslinde: false,
-        declara_certificado_medico: false, // Nuevo campo para la declaración
-        declara_certificado_discapacidad: false, // Nuevo campo para declaración de discapacidad
+        declara_certificado_medico: false,
+        declara_certificado_discapacidad: false,
         tipo_inscripcion: 'regular',
         distancia: '5k', // 5k, 10k, kid, discapacitado
     };
@@ -136,7 +137,11 @@ const Registrar_compra = () => {
         'PRY1': { nombre: 'PROYECTO 1', descuento: 2000 },
         'ESR6': { nombre: 'ESTATU RUN', descuento: 2000 },
         'CAE8': { nombre: 'CENTRO DE ALTO RENDIMIENTO DEPORTIVO (CARD)', descuento: 2000 },
-        'ACG3': { nombre: 'AGRUPACION CLAUDIO GUTIERREZ', descuento: 2000 }
+        'ACG3': { nombre: 'AGRUPACION CLAUDIO GUTIERREZ', descuento: 2000 },
+        'MEMISA5K': { nombre: 'Influencer', descuento: 14999 },
+        'MEMISA10K': { nombre: 'Influencer', descuento: 17999 },
+        'INVITADO5k': { nombre: 'Invitado de la municipalidad', descuento: 14999 },
+        'INVITADO10k': { nombre: 'Invitado de la municipalidad', descuento: 17999 }
     };
 
     // Cargar datos de inscripciones al montar el componente
@@ -156,7 +161,7 @@ const Registrar_compra = () => {
 
         // Agregar personas para cada categoría
         const categorias = ['5k', '10k', 'kid', 'discapacitado'];
-        
+
         categorias.forEach(categoria => {
             if (datos[categoria]) {
                 for (let i = 0; i < datos[categoria]; i++) {
@@ -164,12 +169,12 @@ const Registrar_compra = () => {
                         ...personaTemplate,
                         distancia: categoria
                     };
-                    
+
                     // Para categorías gratuitas, no incluir talle de remera
                     if (categoria === 'kid' || categoria === 'discapacitado') {
                         nuevaPersona.talle_remera = 'No incluido';
                     }
-                    
+
                     nuevasPersonas.push(nuevaPersona);
                 }
             }
@@ -195,13 +200,13 @@ const Registrar_compra = () => {
     const handleInputChange = (e) => {
         const { id, value, type, checked } = e.target;
         const newPersonas = [...personas];
-        
+
         // Actualizar el valor
         newPersonas[personaActual] = {
             ...newPersonas[personaActual],
             [id]: type === 'checkbox' ? checked : value
         };
-        
+
         setPersonas(newPersonas);
     };
 
@@ -238,34 +243,33 @@ const Registrar_compra = () => {
         toast.info('Código de descuento removido');
     };
 
-    // Nueva función para manejar cuando se termina de escribir la fecha
+    // Nueva función para manejar cuando se termina de escribir la fecha - CORREGIDA
     const handleFechaNacimientoBlur = (e) => {
         const value = e.target.value;
         if (!value) return;
 
         const edad = calcularEdad(value);
         const categoria = obtenerCategoria(edad);
-        
-        // Validación específica para categoría Kids
+
+        // VALIDACIONES CORREGIDAS: Los de 15 años PUEDEN inscribirse en 5K/10K
         if (personaActualData.distancia === 'kid' && edad >= 15) {
             toast.error(`Esta persona tiene ${edad} años. La categoría Kids es solo para menores de 15 años. Por favor, cambia a una categoría apropiada.`);
             return;
         }
-        
-        // Validación para categorías 5K y 10K
+
         if ((personaActualData.distancia === '5k' || personaActualData.distancia === '10k') && edad < 15) {
-            toast.error(`Esta persona tiene ${edad} años. Las categorías 5K y 10K requieren al menos 15 años. Te recomendamos la categoría Kids.`);
+            toast.error(`Esta persona tiene ${edad} años. Las categorías 5K y 10K requieren al menos 15 años. Te recomendamos la categoría Kids para menores de 15.`);
             return;
         }
-        
+
         // Actualizar la categoría
         const newPersonas = [...personas];
         newPersonas[personaActual].categoria_edad = categoria;
         setPersonas(newPersonas);
-        
+
         // Mostrar información relevante al usuario
         if (edad < 15 && newPersonas[personaActual].distancia !== 'kid') {
-            toast.info(`Edad calculada: ${edad} años - Categoría Kids recomendada`);
+            toast.info(`Edad calculada: ${edad} años - Categoría Kids recomendada (menores de 15 años)`);
         } else if (categoria) {
             toast.success(`Edad calculada: ${edad} años - Categoría: ${categoria}`);
         }
@@ -292,15 +296,15 @@ const Registrar_compra = () => {
         if (!persona.fecha_nacimiento) {
             errors.push("La fecha de nacimiento es requerida.");
         }
-        
-        // Validación específica para cada categoría
+
+        // VALIDACIONES DE EDAD CORREGIDAS: Los de 15 años PUEDEN ir a 5K/10K
         if (persona.distancia === 'kid' && edad >= 15) {
             errors.push(`Esta persona tiene ${edad} años. La categoría Kids es solo para menores de 15 años.`);
         }
         if ((persona.distancia === '5k' || persona.distancia === '10k') && edad < 15) {
             errors.push(`Esta persona tiene ${edad} años. Las categorías 5K y 10K requieren al menos 15 años de edad.`);
         }
-        
+
         if (!persona.genero) {
             errors.push("El género es requerido.");
         }
@@ -331,12 +335,12 @@ const Registrar_compra = () => {
         if (!/^\d{10}$/.test(persona.contacto_emergencia_telefono)) {
             errors.push("El teléfono del contacto de emergencia debe contener 10 dígitos.");
         }
-        
+
         // Solo validar talle de remera para categorías que la incluyen
         if ((persona.distancia === '5k' || persona.distancia === '10k') && !persona.talle_remera) {
             errors.push("El talle de remera es requerido.");
         }
-        
+
         if (!persona.categoria_edad) {
             errors.push("La categoría de edad es requerida. Asegúrate de haber ingresado la fecha de nacimiento.");
         }
@@ -441,7 +445,7 @@ const Registrar_compra = () => {
 
             // Agregar datos de todas las personas
             formDataToSend.append("personas", JSON.stringify(personas));
-            
+
             // Agregar datos de inscripciones con descuento aplicado
             const inscripcionesConDescuento = {
                 ...inscripcionesData,
@@ -592,17 +596,16 @@ const Registrar_compra = () => {
                                 </div>
 
                                 {/* Datos Personales */}
-                                <div className={`${distanciaInfo.color === 'blue' ? 'bg-blue-50 border-blue-200' : 
-                                                distanciaInfo.color === 'purple' ? 'bg-purple-50 border-purple-200' :
-                                                distanciaInfo.color === 'green' ? 'bg-green-50 border-green-200' :
-                                                'bg-orange-50 border-orange-200'} rounded-xl p-6 border`}>
+                                <div className={`${distanciaInfo.color === 'blue' ? 'bg-blue-50 border-blue-200' :
+                                    distanciaInfo.color === 'purple' ? 'bg-purple-50 border-purple-200' :
+                                        distanciaInfo.color === 'green' ? 'bg-green-50 border-green-200' :
+                                            'bg-orange-50 border-orange-200'} rounded-xl p-6 border`}>
                                     <div className="flex justify-between items-center mb-4">
-                                        <h3 className={`text-xl font-bold flex items-center ${
-                                            distanciaInfo.color === 'blue' ? 'text-blue-900' : 
+                                        <h3 className={`text-xl font-bold flex items-center ${distanciaInfo.color === 'blue' ? 'text-blue-900' :
                                             distanciaInfo.color === 'purple' ? 'text-purple-900' :
-                                            distanciaInfo.color === 'green' ? 'text-green-900' :
-                                            'text-orange-900'
-                                        }`}>
+                                                distanciaInfo.color === 'green' ? 'text-green-900' :
+                                                    'text-orange-900'
+                                            }`}>
                                             <distanciaInfo.icon className="mr-2" />
                                             Datos Personales - {distanciaInfo.name}
                                             {isGratuita(personaActualData.distancia) && (
@@ -862,8 +865,8 @@ const Registrar_compra = () => {
                                                 <TextInput
                                                     id="categoria_edad_display"
                                                     type="text"
-                                                    value={personaActualData.categoria_edad ? 
-                                                        `${personaActualData.categoria_edad} ${personaActualData.categoria_edad === 'kids' ? '(menores de 15)' : 'años'}` : 
+                                                    value={personaActualData.categoria_edad ?
+                                                        `${personaActualData.categoria_edad} ${personaActualData.categoria_edad === 'kids' ? '(menores de 15)' : 'años'}` :
                                                         'Selecciona fecha de nacimiento primero'
                                                     }
                                                     readOnly
@@ -892,7 +895,7 @@ const Registrar_compra = () => {
                                         <div className="flex items-start gap-3">
                                             <Checkbox
                                                 id="declara_certificado_discapacidad"
-                                                checked={personas.some(p => p.distancia === 'discapacitado') ? 
+                                                checked={personas.some(p => p.distancia === 'discapacitado') ?
                                                     personas.find(p => p.distancia === 'discapacitado')?.declara_certificado_discapacidad || false : false}
                                                 onChange={(e) => {
                                                     const newPersonas = [...personas];
@@ -933,7 +936,7 @@ const Registrar_compra = () => {
                                                     Certificado Médico
                                                 </Label>
                                                 <p className="text-blue-800 text-sm mt-1">
-                                                    {(personaActualData.distancia === 'kid' || personaActualData.distancia === 'discapacitado') 
+                                                    {(personaActualData.distancia === 'kid' || personaActualData.distancia === 'discapacitado')
                                                         ? "Declaro que llevaré mi certificado médico apto para la práctica deportiva el día del evento."
                                                         : "Declaro que llevaré mi certificado médico apto para la práctica deportiva para retirar el kit deportivo el día del evento."
                                                     }
@@ -1020,14 +1023,14 @@ const Registrar_compra = () => {
                                         const categoryInfo = CATEGORIES_INFO[key];
                                         const isGratuitaCategory = isGratuita(key);
                                         const colorClass = categoryInfo.color === 'blue' ? 'bg-blue-600/20 border-blue-400/30' :
-                                                           categoryInfo.color === 'purple' ? 'bg-purple-600/20 border-purple-400/30' :
-                                                           categoryInfo.color === 'green' ? 'bg-green-600/20 border-green-400/30' :
-                                                           'bg-orange-600/20 border-orange-400/30';
+                                            categoryInfo.color === 'purple' ? 'bg-purple-600/20 border-purple-400/30' :
+                                                categoryInfo.color === 'green' ? 'bg-green-600/20 border-green-400/30' :
+                                                    'bg-orange-600/20 border-orange-400/30';
                                         const iconColor = categoryInfo.color === 'blue' ? 'text-blue-400' :
-                                                         categoryInfo.color === 'purple' ? 'text-purple-400' :
-                                                         categoryInfo.color === 'green' ? 'text-green-400' :
-                                                         'text-orange-400';
-                                        
+                                            categoryInfo.color === 'purple' ? 'text-purple-400' :
+                                                categoryInfo.color === 'green' ? 'text-green-400' :
+                                                    'text-orange-400';
+
                                         return (
                                             <div key={key} className={`flex justify-between items-center p-3 rounded-lg border ${colorClass}`}>
                                                 <div className="flex items-center gap-2">
@@ -1166,12 +1169,11 @@ const Registrar_compra = () => {
                                                     {persona.nombre || `Persona ${index + 1}`}
                                                 </span>
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`text-xs px-2 py-1 rounded-full ${
-                                                        personaInfo.color === 'blue' ? 'bg-blue-600 text-blue-200' :
+                                                    <span className={`text-xs px-2 py-1 rounded-full ${personaInfo.color === 'blue' ? 'bg-blue-600 text-blue-200' :
                                                         personaInfo.color === 'purple' ? 'bg-purple-600 text-purple-200' :
-                                                        personaInfo.color === 'green' ? 'bg-green-600 text-green-200' :
-                                                        'bg-orange-600 text-orange-200'
-                                                    }`}>
+                                                            personaInfo.color === 'green' ? 'bg-green-600 text-green-200' :
+                                                                'bg-orange-600 text-orange-200'
+                                                        }`}>
                                                         {personaInfo.name}
                                                     </span>
                                                     {isGratuita(persona.distancia) && (
@@ -1238,7 +1240,7 @@ const Registrar_compra = () => {
                                             {totalSinDescuento > 0 ? '¡Inscripción con Descuento Total!' : '¡Inscripción Gratuita!'}
                                         </h3>
                                         <p className="text-sm text-green-300">
-                                            {totalSinDescuento > 0 
+                                            {totalSinDescuento > 0
                                                 ? 'Tu descuento cubre el costo total de la inscripción.'
                                                 : 'Solo necesitas completar todos los datos para finalizar tu inscripción.'
                                             }
