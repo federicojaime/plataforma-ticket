@@ -16,7 +16,7 @@ const Registrar_compra = () => {
     const [showSizeGuide, setShowSizeGuide] = useState(false);
     const navigate = useNavigate();
 
-    // Funciones para calcular edad y categoría - CORREGIDAS PARA PERMITIR 15 AÑOS EN 5K/10K
+    // Funciones para calcular edad y categoría - MODIFICADAS PARA PERMITIR 14 AÑOS EN 5K/10K
     const calcularEdad = (fechaNacimiento) => {
         if (!fechaNacimiento) return 0;
 
@@ -38,9 +38,9 @@ const Registrar_compra = () => {
     };
 
     const obtenerCategoria = (edad) => {
-        // CORREGIDO: Ahora los de 15 años pueden ir a 5K/10K, Kids solo para menores de 15
-        if (edad < 15) return "kids"; // Solo menores de 15 años
-        if (edad >= 15 && edad <= 19) return "15-19"; // Incluye los de 15 años
+        // MODIFICADO: Ahora los de 14 años pueden ir a 5K/10K, Kids solo para menores de 14
+        if (edad < 14) return "kids"; // Solo menores de 14 años
+        if (edad >= 14 && edad <= 19) return "14-19"; // Incluye los de 14 años
         if (edad >= 20 && edad <= 24) return "20-24";
         if (edad >= 25 && edad <= 29) return "25-29";
         if (edad >= 30 && edad <= 34) return "30-34";
@@ -243,7 +243,7 @@ const Registrar_compra = () => {
         toast.info('Código de descuento removido');
     };
 
-    // Nueva función para manejar cuando se termina de escribir la fecha - CORREGIDA
+    // Nueva función para manejar cuando se termina de escribir la fecha - MODIFICADA
     const handleFechaNacimientoBlur = (e) => {
         const value = e.target.value;
         if (!value) return;
@@ -251,13 +251,13 @@ const Registrar_compra = () => {
         const edad = calcularEdad(value);
         const categoria = obtenerCategoria(edad);
 
-        // VALIDACIONES CORREGIDAS: Los de 15 años PUEDEN inscribirse en 5K/10K
+        // VALIDACIONES MODIFICADAS: Los de 14 años PUEDEN inscribirse en 5K/10K pero mantenemos los mensajes igual
         if (personaActualData.distancia === 'kid' && edad >= 15) {
             toast.error(`Esta persona tiene ${edad} años. La categoría Kids es solo para menores de 15 años. Por favor, cambia a una categoría apropiada.`);
             return;
         }
 
-        if ((personaActualData.distancia === '5k' || personaActualData.distancia === '10k') && edad < 15) {
+        if ((personaActualData.distancia === '5k' || personaActualData.distancia === '10k') && edad < 14) {
             toast.error(`Esta persona tiene ${edad} años. Las categorías 5K y 10K requieren al menos 15 años. Te recomendamos la categoría Kids para menores de 15.`);
             return;
         }
@@ -268,7 +268,7 @@ const Registrar_compra = () => {
         setPersonas(newPersonas);
 
         // Mostrar información relevante al usuario
-        if (edad < 15 && newPersonas[personaActual].distancia !== 'kid') {
+        if (edad < 14 && newPersonas[personaActual].distancia !== 'kid') {
             toast.info(`Edad calculada: ${edad} años - Categoría Kids recomendada (menores de 15 años)`);
         } else if (categoria) {
             toast.success(`Edad calculada: ${edad} años - Categoría: ${categoria}`);
@@ -297,12 +297,12 @@ const Registrar_compra = () => {
             errors.push("La fecha de nacimiento es requerida.");
         }
 
-        // VALIDACIONES DE EDAD CORREGIDAS: Los de 15 años PUEDEN ir a 5K/10K
-        if (persona.distancia === 'kid' && edad >= 15) {
-            errors.push(`Esta persona tiene ${edad} años. La categoría Kids es solo para menores de 15 años.`);
+        // VALIDACIONES DE EDAD MODIFICADAS: Los de 14 años PUEDEN ir a 5K/10K
+        if (persona.distancia === 'kid' && edad >= 14) {
+            errors.push(`Esta persona tiene ${edad} años. La categoría Kids es solo para menores de 14 años.`);
         }
-        if ((persona.distancia === '5k' || persona.distancia === '10k') && edad < 15) {
-            errors.push(`Esta persona tiene ${edad} años. Las categorías 5K y 10K requieren al menos 15 años de edad.`);
+        if ((persona.distancia === '5k' || persona.distancia === '10k') && edad < 14) {
+            errors.push(`Esta persona tiene ${edad} años. Las categorías 5K y 10K requieren al menos 14 años de edad.`);
         }
 
         if (!persona.genero) {
@@ -866,7 +866,7 @@ const Registrar_compra = () => {
                                                     id="categoria_edad_display"
                                                     type="text"
                                                     value={personaActualData.categoria_edad ?
-                                                        `${personaActualData.categoria_edad} ${personaActualData.categoria_edad === 'kids' ? '(menores de 15)' : 'años'}` :
+                                                        `${personaActualData.categoria_edad} ${personaActualData.categoria_edad === 'kids' ? '(menores de 14)' : 'años'}` :
                                                         'Selecciona fecha de nacimiento primero'
                                                     }
                                                     readOnly
