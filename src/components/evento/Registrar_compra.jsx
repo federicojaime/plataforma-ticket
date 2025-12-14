@@ -140,8 +140,8 @@ const Registrar_compra = () => {
         'ACG3': { nombre: 'AGRUPACION CLAUDIO GUTIERREZ', descuento: 2000 },
         'MEMISA5K': { nombre: 'Influencer', descuento: 14999 },
         'MEMISA10K': { nombre: 'Influencer', descuento: 17999 },
-        'INVITADO5k': { nombre: 'Invitado de la municipalidad', descuento: 14999 },
-        'INVITADO10k': { nombre: 'Invitado de la municipalidad', descuento: 17999 }
+        'INVITADO5': { nombre: 'Invitado', descuento: 14999 },
+        'INVITA10': { nombre: 'Invitado', descuento: 17999 }
     };
 
     // Cargar datos de inscripciones al montar el componente

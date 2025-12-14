@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
 
@@ -31,6 +32,16 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    const forceLogoutDueToExpiredToken = () => {
+        console.log('🚫 Token vencido - Forzando logout');
+        logout();
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        // Forzar redirección
+        setTimeout(() => {
+            window.location.href = '/ticket/login';
+        }, 1000);
+    };
+
     useEffect(() => {
         const validateToken = async () => {
             const token = localStorage.getItem("tikets-token");
@@ -50,16 +61,29 @@ export const AuthProvider = ({ children }) => {
                     credentials: 'include'
                 });
                 
+                console.log('🔍 Validación token - Status:', response.status);
+                
+                if (response.status === 401 || response.status === 403) {
+                    console.log('❌ Token vencido en validación inicial');
+                    forceLogoutDueToExpiredToken();
+                    return;
+                }
+                
                 const json = await response.json();
                 if (json.ok && json.data && json.data.id) {
                     const userData = { ...json.data, jwt: token };
                     login(userData);
                 } else {
-                    logout();
+                    console.log('❌ Respuesta inválida del servidor');
+                    forceLogoutDueToExpiredToken();
                 }
             } catch (error) {
                 console.error('Error validando token:', error);
-                logout();
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    toast.error('Error de conexión. Verifica tu conexión a internet.');
+                } else {
+                    forceLogoutDueToExpiredToken();
+                }
             } finally {
                 setAuthLoading(false);
             }
@@ -71,6 +95,33 @@ export const AuthProvider = ({ children }) => {
             setAuthLoading(false);
         }
     }, []);
+
+    // Interceptor global para detectar 401/403 en cualquier request
+    useEffect(() => {
+        const originalFetch = window.fetch;
+        
+        window.fetch = async (url, options = {}) => {
+            const response = await originalFetch(url, options);
+            
+            const apiUrl = import.meta.env.VITE_API_URL;
+            if ((response.status === 401 || response.status === 403) && 
+                url.includes(apiUrl) && 
+                !url.includes('/login') && 
+                !url.includes('/register') &&
+                !url.includes('/token/validate') &&
+                user?.jwt) {
+                
+                console.log('🚫 Token vencido detectado en request:', url, 'Status:', response.status);
+                forceLogoutDueToExpiredToken();
+            }
+            
+            return response;
+        };
+
+        return () => {
+            window.fetch = originalFetch;
+        };
+    }, [user]);
 
     return (
         <AuthContext.Provider value={{ 
